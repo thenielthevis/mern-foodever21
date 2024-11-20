@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
         required: [true, 'Please provide an email'],
         unique: true,
     },
+    password: {
+        type: String,
+        required: [true, 'Please provide a password'],
+    },
     firebaseUid: {
         type: String,
         required: [true, 'Firebase UID is required'],
@@ -30,7 +34,7 @@ const userSchema = new mongoose.Schema({
     },
     cloudinary_id: {
         type: String,
-    }
+    },
 });
 
 const User = mongoose.model('User', userSchema);

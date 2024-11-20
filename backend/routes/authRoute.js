@@ -1,16 +1,22 @@
 const express = require('express');
-const authController = require('../controllers/authController');
 const protect = require('../middleware/protect');
+
+const {
+    login,
+    updateUser,
+    resetPassword,
+    uploadAvatar,
+    getCurrentUser
+} = require('../controllers/authController');
 
 const router = express.Router();
 
-//router.post('/signup', authController.signup);
-router.post('/login', authController.login);
-router.patch('/updateUser', protect, authController.updateUser);
-router.put('/updateUser', protect, authController.updateUser); // Add this line to support PUT requests
-router.post('/resetPassword', authController.resetPassword);
-router.post('/upload-avatar', authController.uploadAvatar);
-
-
+router.post('/signup', signup);
+router.post('/login', login);
+router.patch('/updateUser', protect, updateUser);
+router.put('/updateUser', protect, updateUser);
+router.post('/resetPassword', resetPassword);
+router.post('/upload-avatar', uploadAvatar);
+router.get('/me', protect, getCurrentUser);
 
 module.exports = router;
