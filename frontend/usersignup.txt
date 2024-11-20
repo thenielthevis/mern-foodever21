@@ -1,0 +1,224 @@
+const upload = require('../utils/multer'); // Correctly import multer from utils/multer
+const { admin, db } = require('../utils/firebaseAdminConfig');
+const User = require('../models/userModel');
+const cloudinary = require('../utils/cloudinary'); // Import Cloudinary config
+
+exports.signup = [
+  upload.single('image'), // Expect a single file upload with field name "image"
+  async (req, res) => {
+    console.log("Received signup request with data:", req.body);
+
+    const { email, password, username } = req.body;
+    const imageFile = req.file; // Access the uploaded file (if any)
+
+    // Check if required fields are provided
+    if (!email || !password || !username) {
+      console.log("Missing required fields. Email:", email, "Password:", password, "Username:", username);
+      return res.status(400).json({ message: 'Email, password, and username are required.' });
+    }
+
+    // Validate email format
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
+    if (!validateEmail(email)) {
+      console.log("Invalid email format:", email);
+      return res.status(400).json({ message: 'The email address is improperly formatted.' });
+    }
+
+    try {
+      // Check if user already exists
+      const existingUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
+      if (existingUser) {
+        console.log("User already exists with email:", email);
+        return res.status(400).json({ message: 'The email address is already in use by another account.' });
+      }
+    } catch (error) {
+      if (error.code !== 'auth/user-not-found') {
+        console.error("Error checking existing user. Email:", email, "Error:", error.message);
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
+    try {
+      // Create a new user in Firebase Authentication
+      const userRecord = await admin.auth().createUser({
+        email: email.trim().toLowerCase(),
+        password,
+        displayName: username,
+      });
+      console.log("User created in Firebase Authentication:", userRecord);
+
+      // Generate email verification link
+      const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
+      console.log("Email verification link generated:", emailVerificationLink);
+
+      // Optionally, send the verification email using a custom email service
+      // await sendCustomVerificationEmail(email.trim().toLowerCase(), emailVerificationLink);
+
+      // Upload image to Cloudinary (if provided)
+      let imageUrl = '';
+      if (imageFile) {
+        const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
+        imageUrl = uploadResponse.secure_url;
+        console.log("Image uploaded to Cloudinary:", imageUrl);
+      }
+
+      // Save user data to MongoDB
+      const newUser = new User({
+        email: email.trim().toLowerCase(),
+        username,
+        firebaseUid: userRecord.uid,
+        imageUrl, // Save the image URL if provided
+      });
+      await newUser.save();
+      console.log("User data saved to MongoDB:", newUser);
+
+      // Save user data to Firestore
+      await db.collection('users').doc(userRecord.uid).set({
+        email: email.trim().toLowerCase(),
+        username,
+        firebaseUid: userRecord.uid,
+        imageUrl,
+      });
+      console.log("User data saved to Firestore");
+
+      // Respond with success message and user details
+      res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
+    } catch (error) {
+      console.error("Error during signup. Email:", email, "Error:", error.message);
+      res.status(400).json({ message: error.message });
+    }
+  }
+];
+
+
+// Controller function to handle user login
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    // Firebase Authentication Client SDK should handle password verification on the client side.
+    // Here, we assume the client sends a valid ID token after successful login.
+    const userRecord = await admin.auth().getUserByEmail(email);
+    // Respond with success message and user details
+    res.status(200).json({ message: 'User logged in successfully', user: userRecord });
+  } catch (error) {
+    // Respond with error message if login fails
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Controller function to handle user update
+exports.updateUser = async (req, res) => {
+  const { email, password, username } = req.body;
+  const userId = req.user.uid; // Assuming user ID is available in req.user
+  try {
+    // Update user details in Firebase Authentication
+    const userRecord = await admin.auth().updateUser(userId, {
+      email,
+      password,
+      displayName: username,
+    });
+    // Respond with success message and updated user details
+    res.status(200).json({ message: 'User updated successfully', user: userRecord });
+  } catch (error) {
+    // Respond with error message if user update fails
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Controller function to handle password reset
+exports.resetPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    // Generate a password reset link for the given email
+    const link = await admin.auth().generatePasswordResetLink(email);
+    // Send the link to the user's email address
+    // You can use a service like SendGrid, Mailgun, etc. to send the email
+    res.status(200).json({ message: 'Password reset email sent. Please check your inbox.', link });
+  } catch (error) {
+    // Respond with error message if password reset fails
+    res.status(400).json({ message: error.message });
+  }
+};
+
+
+import { useState } from "react";
+import { message } from "antd";
+import { useAuth } from "../context/AuthContext";
+
+const useSignup = () => {
+    const { login } = useAuth();
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const validateEmail = (email) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(String(email).trim().toLowerCase()); // Trim and lowercase email here
+    };
+
+    const registerUser = async (values) => {
+        console.log("Received Values in registerUser:", values); // Log initial values
+        const trimmedEmail = values.email.trim().toLowerCase();
+        console.log("Trimmed and Lowercased Email:", trimmedEmail); // Verify email is processed
+    
+        if (!validateEmail(trimmedEmail)) {
+            setError("Invalid email format!");
+            message.error("Invalid email format!");
+            return false;
+        }
+        if (values.password !== values.passwordConfirm) {
+            setError("Passwords do not match!");
+            message.error("Passwords do not match!");
+            return false;
+        }
+        try {
+            setError(null);
+            setLoading(true);
+
+            // Optionally, send additional user data to your backend
+            const formData = new FormData();
+            formData.append('username', values.username);
+            formData.append('email', trimmedEmail); // Use trimmed and lowercased email here
+            formData.append('password', values.password); // Ensure password is included
+            if (values.image && values.image[0]) {
+                formData.append('image', values.image[0].originFileObj);
+            }
+
+            console.log("Sending form data:");
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            // Send user data to backend
+            const response = await fetch("http://localhost:5000/api/auth/signup", {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            // console.log("Response data:", data);
+
+            if (response.status === 201) {
+                message.success(data.message);
+                login(data.token, data.user); // Ensure user data includes userImage
+                return true; // Return success status
+            } else if (response.status === 400) {
+                setError(data.message);
+                message.error(data.message);
+                return false;
+            } else {
+                setError(data.message || 'Registration failed. Please try again later.');
+                message.error(data.message || 'Registration failed. Please try again later.');
+                return false;
+            }
+        } catch (error) {
+            setError(error.message || 'An unexpected error occurred.');
+            message.error(error.message || 'An unexpected error occurred.');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return { loading, error, registerUser };
+};
+export { useSignup };
