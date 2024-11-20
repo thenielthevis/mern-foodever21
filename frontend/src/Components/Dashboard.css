@@ -1,0 +1,15 @@
+/* src/components/Dashboard.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add any additional scoped styles here */
+.dashboard-container {
+    /* Custom styles for the Dashboard component */
+}
+.dashboard-text-2xl {
+    @apply text-2xl;
+}
+.dashboard-font-bold {
+    @apply font-bold;
+}

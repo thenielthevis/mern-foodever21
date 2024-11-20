@@ -1,4 +1,3 @@
-
 // App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -9,32 +8,36 @@ import Products from './Components/Product/Products';
 import ProductDetail from './Components/Product/ProductDetails';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
+import Profile from './Auth/Profile'; // Import Profile component
+import UpdateEmail from './Auth/UpdateEmail';
+import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { toast, ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-function App() {
+const App = () => {
   return (
-    <div className="App">
-      <AuthProvider> {/* Wrap your application with AuthProvider */}
-        <Router>
-          <Header /> {/* Render Header outside of Routes */}
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/login" element={<Login />} /> {/* Add the login route */}
-            <Route path="/register" element={<Register />} /> {/* Add the register route */}
-          </Routes>
-          <Footer /> {/* Render Footer outside of Routes */}
-        </Router>
-      </AuthProvider>
-      <ToastContainer />
-    </div>
+    <AuthProvider>
+      <Router>
+        <Header />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/profile" element={<Profile />} /> {/* Add the profile route */}
+          <Route path="/update-email" element={<UpdateEmail />} />
+          <Route path="/change-password" element={<ChangePassword />} />
+        </Routes>
+        <Footer />
+        <ToastContainer />
+      </Router>
+    </AuthProvider>
   );
-}
+};
 
 export default App;

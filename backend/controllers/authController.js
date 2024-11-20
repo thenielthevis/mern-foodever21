@@ -15,7 +15,7 @@
 //     if (!email || !password || !username) {
 //       console.log("Missing required fields. Email:", email, "Password:", password, "Username:", username);
 //       return res.status(400).json({ message: 'Email, password, and username are required.' });
-//     }np
+//     }
 
 //     // Validate email format
 //     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
@@ -94,73 +94,73 @@ const { admin, db } = require('../utils/firebaseAdminConfig');
 const User = require('../models/userModel');
 const cloudinary = require('../utils/cloudinary');
 
-exports.signup = [
-  upload.single('image'),
-  async (req, res) => {
-    const { email, password, username } = req.body;
-    const imageFile = req.file;
+// exports.signup = [
+//   upload.single('image'),
+//   async (req, res) => {
+//     const { email, password, username } = req.body;
+//     const imageFile = req.file;
 
-    if (!email || !password || !username) {
-      return res.status(400).json({ message: 'Email, password, and username are required.' });
-    }
+//     if (!email || !password || !username) {
+//       return res.status(400).json({ message: 'Email, password, and username are required.' });
+//     }
 
-    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
-    if (!validateEmail(email)) {
-      return res.status(400).json({ message: 'The email address is improperly formatted.' });
-    }
+//     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
+//     if (!validateEmail(email)) {
+//       return res.status(400).json({ message: 'The email address is improperly formatted.' });
+//     }
 
-    try {
-      const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
-      if (existingUser) {
-        return res.status(400).json({ message: 'The email address is already in use by another account.' });
-      }
+//     try {
+//       const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
+//       if (existingUser) {
+//         return res.status(400).json({ message: 'The email address is already in use by another account.' });
+//       }
 
-      const existingFirebaseUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
-      if (existingFirebaseUser) {
-        return res.status(400).json({ message: 'The email address is already in use by another account.' });
-      }
-    } catch (error) {
-      if (error.code !== 'auth/user-not-found') {
-        return res.status(400).json({ message: error.message });
-      }
-    }
+//       const existingFirebaseUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
+//       if (existingFirebaseUser) {
+//         return res.status(400).json({ message: 'The email address is already in use by another account.' });
+//       }
+//     } catch (error) {
+//       if (error.code !== 'auth/user-not-found') {
+//         return res.status(400).json({ message: error.message });
+//       }
+//     }
 
-    try {
-      const userRecord = await admin.auth().createUser({
-        email: email.trim().toLowerCase(),
-        password,
-        displayName: username,
-      });
+//     try {
+//       const userRecord = await admin.auth().createUser({
+//         email: email.trim().toLowerCase(),
+//         password,
+//         displayName: username,
+//       });
 
-      const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
+//       const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
 
-      let imageUrl = '';
-      if (imageFile) {
-        const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
-        imageUrl = uploadResponse.secure_url;
-      }
+//       let imageUrl = '';
+//       if (imageFile) {
+//         const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
+//         imageUrl = uploadResponse.secure_url;
+//       }
 
-      const newUser = new User({
-        email: email.trim().toLowerCase(),
-        username,
-        firebaseUid: userRecord.uid,
-        imageUrl,
-      });
-      await newUser.save();
+//       const newUser = new User({
+//         email: email.trim().toLowerCase(),
+//         username,
+//         firebaseUid: userRecord.uid,
+//         imageUrl,
+//       });
+//       await newUser.save();
 
-      await db.collection('users').doc(userRecord.uid).set({
-        email: email.trim().toLowerCase(),
-        username,
-        firebaseUid: userRecord.uid,
-        imageUrl,
-      });
+//       await db.collection('users').doc(userRecord.uid).set({
+//         email: email.trim().toLowerCase(),
+//         username,
+//         firebaseUid: userRecord.uid,
+//         imageUrl,
+//       });
 
-      res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  }
-];
+//       res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
+//     } catch (error) {
+//       res.status(400).json({ message: error.message });
+//     }
+//   }
+// ];
 
 // Controller function to handle user login
 exports.login = async (req, res) => {
@@ -210,3 +210,25 @@ exports.resetPassword = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+exports.uploadAvatar = [
+  upload.single('image'),
+  async (req, res) => {
+    const imageFile = req.file;
+
+    if (!imageFile) {
+      return res.status(400).json({ message: 'Image file is required.' });
+    }
+
+    try {
+      // Upload image to Cloudinary
+      const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
+      const imageUrl = uploadResponse.secure_url;
+
+      res.status(201).json({ message: 'Image uploaded successfully', secure_url: imageUrl });
+    } catch (error) {
+      console.error("Error during image upload:", error.message);
+      res.status(400).json({ message: error.message });
+    }
+  }
+];
