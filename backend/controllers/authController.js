@@ -5,6 +5,68 @@ const cloudinary = require('../utils/cloudinary');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+exports.signup = [
+  upload.single('image'),
+  async (req, res) => {
+    const { email, password, username } = req.body;
+    const imageFile = req.file;
+
+    if (!email || !password || !username) {
+      return res.status(400).json({ message: 'Email, password, and username are required.' });
+    }
+
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: 'The email address is improperly formatted.' });
+    }
+
+    try {
+      const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
+      if (existingUser) {
+        return res.status(400).json({ message: 'The email address is already in use by another account.' });
+      }
+      const existingFirebaseUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
+      if (existingFirebaseUser) {
+        return res.status(400).json({ message: 'The email address is already in use by another account.' });
+      }
+    } catch (error) {
+      if (error.code !== 'auth/user-not-found') {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
+    try {
+      const userRecord = await admin.auth().createUser({
+        email: email.trim().toLowerCase(),
+        password,
+        displayName: username,
+      });
+      const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
+      let imageUrl = '';
+      if (imageFile) {
+        const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
+        imageUrl = uploadResponse.secure_url;
+      }
+      const newUser = new User({
+        email: email.trim().toLowerCase(),
+        username,
+        firebaseUid: userRecord.uid,
+        imageUrl,
+      });
+      await newUser.save();
+      await db.collection('users').doc(userRecord.uid).set({
+        email: email.trim().toLowerCase(),
+        username,
+        firebaseUid: userRecord.uid,
+        imageUrl,
+      });
+      res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+];
+
 // Controller function to handle user login
 exports.login = async (req, res) => {
   const { email, password } = req.body;

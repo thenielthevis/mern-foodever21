@@ -6,7 +6,8 @@ const {
     updateUser,
     resetPassword,
     uploadAvatar,
-    getCurrentUser
+    getCurrentUser,
+    signup
 } = require('../controllers/authController');
 
 const router = express.Router();
