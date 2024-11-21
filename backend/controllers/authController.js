@@ -245,7 +245,7 @@ exports.uploadAvatar = [
     } catch (error) {
       console.error("Error during image upload:", error.message);
       res.status(400).json({ message: error.message });
-    }
+    } 
   }
 ];
 
@@ -382,30 +382,3 @@ exports.addToOrderList = async (req, res) => {
     res.status(500).json({ message: 'Failed to add item to order list.' });
   }
 };
-
-exports.removeFromOrderList = async (req, res) => {
-  try {
-    const { userId, product_id } = req.body;
-
-    if (!userId || !product_id) {
-      return res.status(400).json({ message: 'User ID and product ID are required.' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
-    }
-
-    // Remove the item from the order list
-    user.orderlist = user.orderlist.filter(
-      item => item.product_id.toString() !== product_id.toString()
-    );
-
-    await user.save();
-    res.status(200).json({ message: 'Item removed from order list successfully.', orderlist: user.orderlist });
-  } catch (error) {
-    console.error('Error removing from order list:', error);
-    res.status(500).json({ message: 'Failed to remove item from order list.' });
-  }
-};
-

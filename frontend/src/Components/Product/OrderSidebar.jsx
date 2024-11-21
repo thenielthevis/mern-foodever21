@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Box, Typography, IconButton, TextField, Checkbox, FormControlLabel, Button } from '@mui/material';
+import {
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
+  TextField,
+  Checkbox,
+  Button,
+} from '@mui/material';
 import { Delete, Close, RestaurantMenu } from '@mui/icons-material';
 import axios from 'axios';
 import Toast from '../Layout/Toast';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
 
 const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }) => {
   const [orderList, setOrderList] = useState([]);
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate(); // Initialize navigation hook
 
   const fetchOrderList = async () => {
     try {
@@ -26,7 +36,7 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
       });
 
       setOrderList(response.data.orders);
-      setSelectedOrders(response.data.orders.map(order => ({ ...order, selected: false }))); // Initialize with unselected
+      setSelectedOrders(response.data.orders.map((order) => ({ ...order, selected: false })));
       setLoading(false);
     } catch (error) {
       console.error('Error fetching order list:', error);
@@ -35,63 +45,23 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
     }
   };
 
-  const updateQuantity = async (orderId, newQuantity) => {
-    try {
-      if (newQuantity <= 0) {
-        Toast('Quantity must be greater than 0.', 'error');
-        return;
-      }
-
-      const token = await user.getIdToken();
-      await axios.put(
-        `${import.meta.env.VITE_API}/update-order/${orderId}`,
-        { quantity: newQuantity },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      Toast('Quantity updated successfully!', 'success');
-      fetchOrderList();
-      onUpdateOrderCount();
-    } catch (error) {
-      console.error('Error updating quantity:', error.response?.data || error.message);
-      Toast('Failed to update quantity.', 'error');
-    }
-  };
-
-  const deleteOrder = async (orderId) => {
-    try {
-      const token = await user.getIdToken();
-      await axios.delete(`${import.meta.env.VITE_API}/delete-order/${orderId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      Toast('Order deleted successfully!', 'success');
-      fetchOrderList();
-      onUpdateOrderCount();
-    } catch (error) {
-      console.error('Error deleting order:', error.response?.data || error.message);
-      Toast('Failed to delete order.', 'error');
-    }
-  };
-
-  const handleCheckboxChange = (orderId) => {
-    setSelectedOrders((prev) =>
-      prev.map((order) =>
-        order.order_id === orderId ? { ...order, selected: !order.selected } : order
-      )
-    );
-  };
-
   const calculateTotalPrice = () => {
     return selectedOrders
       .filter((order) => order.selected)
       .reduce((total, order) => total + order.product.price * order.quantity, 0);
+  };
+
+  const handleOrder = () => {
+    const selectedItems = selectedOrders.filter((order) => order.selected);
+    if (selectedItems.length === 0) {
+      Toast('Please select at least one item to proceed.', 'error');
+      return;
+    }
+
+    // Redirect to checkout page with selected orders and total price
+    navigate('/checkout', {
+      state: { selectedItems, totalPrice: calculateTotalPrice() },
+    });
   };
 
   useEffect(() => {
@@ -119,7 +89,7 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
           color: 'white',
         }}
       >
-        {/* Header Section */}
+        {/* Sidebar Content */}
         <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
           <IconButton
             color="inherit"
@@ -141,8 +111,6 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
           >
             My Order List
           </Typography>
-  
-          {/* Loading State */}
           {loading ? (
             <Typography sx={{ color: 'white', textAlign: 'center' }}>Loading...</Typography>
           ) : orderList.length === 0 ? (
@@ -174,17 +142,22 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
                   p: 1,
                 }}
               >
-                {/* Checkbox */}
                 <Checkbox
                   checked={order.selected}
-                  onChange={() => handleCheckboxChange(order.order_id)}
+                  onChange={() =>
+                    setSelectedOrders((prev) =>
+                      prev.map((o) =>
+                        o.order_id === order.order_id
+                          ? { ...o, selected: !o.selected }
+                          : o
+                      )
+                    )
+                  }
                   sx={{
                     color: 'gold',
                     '&.Mui-checked': { color: 'gold' },
                   }}
                 />
-  
-                {/* Product Image */}
                 <img
                   src={order.product.image}
                   alt={order.product.name}
@@ -195,8 +168,6 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
                     marginRight: '10px',
                   }}
                 />
-  
-                {/* Product Details */}
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="subtitle1" sx={{ color: 'gold', fontWeight: 'bold' }}>
                     {order.product.name}
@@ -206,38 +177,12 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
                     <b>₱{order.product.price * order.quantity}</b>
                   </Typography>
                 </Box>
-  
-                {/* Quantity Input */}
-                <TextField
-                  type="number"
-                  value={order.quantity}
-                  onChange={(e) => updateQuantity(order.order_id, parseInt(e.target.value))}
-                  size="small"
-                  sx={{
-                    width: 60,
-                    mr: 2,
-                    '& .MuiInputBase-input': { color: 'white' },
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': { borderColor: 'lightgray' },
-                      '&:hover fieldset': { borderColor: 'white' },
-                    },
-                  }}
-                />
-  
-                {/* Delete Button */}
-                <IconButton
-                  color="error"
-                  onClick={() => deleteOrder(order.order_id)}
-                  sx={{ '&:hover': { backgroundColor: 'rgba(255, 0, 0, 0.2)' } }}
-                >
-                  <Delete sx={{ color: 'red' }} />
-                </IconButton>
               </Box>
             ))
           )}
         </Box>
-  
-        {/* Total Price Section */}
+
+        {/* Footer Total and Order Button */}
         <Box
           sx={{
             borderTop: '1px solid lightgray',
@@ -260,13 +205,14 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
               color: 'black',
               '&:hover': { bgcolor: '#f1c40f' },
             }}
+            onClick={handleOrder}
           >
             Order
           </Button>
         </Box>
       </Box>
     </Drawer>
-  );  
+  );
 };
 
 export default OrderSidebar;

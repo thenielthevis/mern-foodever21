@@ -7,7 +7,8 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const products = require('./routes/product');
 const authRoute = require('./routes/authRoute');
-const orderRoutes = require('./routes/orderlist');
+const orderListRoutes = require('./routes/orderlist');
+const orderRoutes = require('./routes/order');
 
 // Middleware
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -28,6 +29,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/v1', products);
+app.use('/api/v1', orderListRoutes);
 app.use('/api/v1', orderRoutes);
 app.use('/api/auth', authRoute);
 

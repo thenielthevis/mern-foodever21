@@ -8,8 +8,8 @@ const {
     uploadAvatar,
     getCurrentUser,
     signup,
-    checkEmail,  // Import the checkEmail controller
-    deleteUser   // Import the deleteUser controller
+    checkEmail,
+    deleteUser,
 } = require('../controllers/authController');
 
 const router = express.Router();

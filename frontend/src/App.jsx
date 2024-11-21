@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Components/Home';
 import Header from './Components/Layout/Header';
 import Footer from './Components/Layout/Footer';
 import Products from './Components/Product/Products';
 import ProductDetail from './Components/Product/ProductDetails';
+import CheckoutPage from './Components/Product/CheckoutPage';
+import OrderHistory from './Auth/OrderHistory';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
 import Profile from './Auth/Profile';
@@ -20,38 +22,30 @@ import axios from 'axios';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 
-const App = () => {
-  const [currentUser, setCurrentUser] = useState(null); // Track logged-in user
-  const [orderCount, setOrderCount] = useState(0); // Track total items in order list
+const AppContent = () => {
+  const location = useLocation(); // Track the current route
+  const [currentUser, setCurrentUser] = useState(null); // Track the logged-in user
+  const [orderCount, setOrderCount] = useState(0); // Track the total order count
 
   // Fetch the order count from the backend
   const fetchOrderCount = async () => {
     try {
       if (!currentUser) {
-        console.log('No user is currently logged in.');
         setOrderCount(0);
         return;
       }
 
-      const token = await currentUser.getIdToken(); // Fetch Firebase token
-      console.log('Firebase Token:', token);
+      const token = await currentUser.getIdToken();
+      const response = await axios.get(`${import.meta.env.VITE_API}/user-orderlist`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API}/user-orderlist`, // Adjust API endpoint if needed
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Include token in request headers
-          },
-        }
-      );
-
-      // Calculate the total number of items in the user's order list
       const totalOrderCount = response.data.orders.reduce(
         (acc, order) => acc + order.quantity,
         0
       );
-
-      console.log('Total Order Count:', totalOrderCount);
       setOrderCount(totalOrderCount);
     } catch (error) {
       console.error('Error fetching order count:', error);
@@ -61,53 +55,67 @@ const App = () => {
   // Track authentication state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log('User logged in:', user.email);
-        setCurrentUser(user); // Set current user when logged in
-      } else {
-        console.log('No user is currently logged in.');
-        setCurrentUser(null); // Clear user state when logged out
-        setOrderCount(0); // Reset order count
-      }
+      setCurrentUser(user || null);
+      if (!user) setOrderCount(0); // Reset order count if logged out
     });
-
-    return () => unsubscribe(); // Clean up listener on unmount
+    return () => unsubscribe();
   }, []);
 
-  // Fetch order count whenever the currentUser state updates
+  // Fetch the order count whenever the current user changes
   useEffect(() => {
-    if (currentUser) {
-      fetchOrderCount();
-    }
+    if (currentUser) fetchOrderCount();
   }, [currentUser]);
 
-  // Update the order count when an item is added to the order list
   const onUpdateOrderCount = () => {
-    fetchOrderCount(); // Re-fetch the order count
+    fetchOrderCount(); // Update the order count
   };
 
+  // Define routes where header, footer, and background should be adjusted
+  const noHeaderFooterRoutes = ['/checkout', '/login', '/register'];
+  const noBackgroundRoutes = ['/checkout'];
+  const hideHeaderFooter = noHeaderFooterRoutes.includes(location.pathname);
+
+  // Dynamically adjust the `<body>` class based on the route
+  useEffect(() => {
+    if (noBackgroundRoutes.includes(location.pathname)) {
+      document.body.classList.add('no-background');
+    } else {
+      document.body.classList.remove('no-background');
+    }
+  }, [location]);
+
   return (
-    <AuthProvider>
-      <Router>
-      <Header orderCount={orderCount} onUpdateOrderCount={onUpdateOrderCount} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products />} />
-          <Route
-            path="/product/:id"
-            element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />} // Pass onUpdateOrderCount
-          />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/update-email" element={<UpdateEmail />} />
-          <Route path="/change-password" element={<ChangePassword />} />
-        </Routes>
-        <Footer />
-        <ToastContainer />
-      </Router>
-    </AuthProvider>
+    <>
+      {!hideHeaderFooter && (
+        <Header orderCount={orderCount} onUpdateOrderCount={onUpdateOrderCount} />
+      )}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products />} />
+        <Route
+          path="/product/:id"
+          element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/order-history" element={<OrderHistory />} />
+        <Route path="/update-email" element={<UpdateEmail />} />
+        <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+      </Routes>
+      {!hideHeaderFooter && <Footer />}
+      <ToastContainer />
+    </>
   );
 };
+
+const App = () => (
+  <AuthProvider>
+    <Router>
+      <AppContent />
+    </Router>
+  </AuthProvider>
+);
 
 export default App;
