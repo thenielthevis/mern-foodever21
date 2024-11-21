@@ -11,6 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
+import DashboardIcon from '@mui/icons-material/Dashboard'; // Import Dashboard icon
 import { useAuth } from '../context/AuthContext'; // Correct import path
 import axios from 'axios'; // You might need to install axios if you don't have it
 
@@ -54,6 +55,10 @@ export default function AccountMenu() {
 
   const handleProfile = () => {
     navigate('/profile'); // Navigate to profile page
+  };
+
+  const handleDashboard = () => {
+    navigate('/dashboard'); // Navigate to dashboard page
   };
 
   const handleUpdateEmail = () => {
@@ -120,6 +125,12 @@ export default function AccountMenu() {
       >
         <MenuItem onClick={handleProfile}>
           <Avatar /> Profile
+        </MenuItem>
+        <MenuItem onClick={handleDashboard}>
+          <ListItemIcon>
+            <DashboardIcon fontSize="small" />
+          </ListItemIcon>
+          Dashboard
         </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>

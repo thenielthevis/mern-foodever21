@@ -18,6 +18,8 @@ import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import OverviewPage from './Components/Dashboard/pages/OverviewPage';
+import ProductsPage from './Components/Dashboard/pages/ProductsPage';
 
 const App = () => {
   return (
@@ -33,7 +35,8 @@ const App = () => {
           <Route path="/profile" element={<Profile />} /> {/* Add the profile route */}
           <Route path="/update-email" element={<UpdateEmail />} />
           <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<OverviewPage />} />
+          <Route path="/products-page" element={<ProductsPage />} />
         </Routes>
         <Footer />
         <ToastContainer />
