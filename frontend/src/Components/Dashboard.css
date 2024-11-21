@@ -5,7 +5,8 @@
 
 /* Add any additional scoped styles here */
 .dashboard-container {
-    /* Custom styles for the Dashboard component */
+    display: flex;
+    flex-direction: row; /* Ensure sidebar and content align horizontally */
 }
 .dashboard-text-2xl {
     @apply text-2xl;

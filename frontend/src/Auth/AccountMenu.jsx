@@ -8,10 +8,10 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-//import Settings from '@mui/icons-material/Settings';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
+import DashboardIcon from '@mui/icons-material/Dashboard'; // Import Dashboard icon
 import { useAuth } from '../context/AuthContext'; // Correct import path
 
 export default function AccountMenu() {
@@ -37,9 +37,9 @@ export default function AccountMenu() {
     navigate('/profile'); // Navigate to profile page
   };
 
-  // const handleSettings = () => {
-  //   navigate('/settings'); // Navigate to settings page (if you have one)
-  // };
+  const handleDashboard = () => {
+    navigate('/dashboard'); // Navigate to dashboard page
+  };
 
   const handleUpdateEmail = () => {
     navigate('/update-email'); // Navigate to update email page
@@ -105,12 +105,12 @@ export default function AccountMenu() {
         <MenuItem onClick={handleProfile}>
           <Avatar /> Profile
         </MenuItem>
-        {/* <MenuItem onClick={handleSettings}>
+        <MenuItem onClick={handleDashboard}>
           <ListItemIcon>
-            <Settings fontSize="small" />
+            <DashboardIcon fontSize="small" />
           </ListItemIcon>
-          Settings
-        </MenuItem> */}
+          Dashboard
+        </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>
             <Email fontSize="small" />
