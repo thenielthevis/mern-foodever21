@@ -13,12 +13,32 @@ import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
 import DashboardIcon from '@mui/icons-material/Dashboard'; // Import Dashboard icon
 import { useAuth } from '../context/AuthContext'; // Correct import path
+import axios from 'axios'; // You might need to install axios if you don't have it
 
 export default function AccountMenu() {
-  const { user, logout } = useAuth(); // Get the current user and logout function
+  const { logout } = useAuth(); // Get the logout function from context
+  const [user, setUser] = React.useState(null); // Store user data
   const navigate = useNavigate(); // Use React Router's useNavigate hook
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+
+  // Fetch current user data when the component mounts
+  React.useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`, // Get the token from localStorage
+          },
+        });
+        setUser(response.data.user); // Assuming user data is in the `user` field of the response
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -61,7 +81,8 @@ export default function AccountMenu() {
             aria-haspopup="true"
             aria-expanded={open ? 'true' : undefined}
           >
-            <Avatar src={user?.photoURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
+            <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
+            <span>{user?.username}</span>
           </IconButton>
         </Tooltip>
       </Box>

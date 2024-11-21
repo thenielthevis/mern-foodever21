@@ -1,6 +1,4 @@
-// module.exports = protect;
-
-const { getAuth } = require('firebase-admin/auth');
+const { admin, db } = require('../utils/firebaseAdminConfig'); // Use Firestore here
 const createError = require('../utils/appError');
 
 const protect = async (req, res, next) => {
@@ -17,22 +15,23 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token using Firebase Admin SDK
-    const decodedToken = await getAuth().verifyIdToken(token);
-
-    // Check if user still exists in your database
-    const currentUser = await User.findOne({ firebaseUid: decodedToken.uid });
-    if (!currentUser) {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    console.log('Decoded Token UID:', decodedToken.uid);  // Log the decoded UID
+    
+    // Query Firestore for the user with the UID
+    const userDoc = await db.collection('users').doc(decodedToken.uid).get();
+    if (!userDoc.exists) {
       return next(new createError('The user belonging to this token does no longer exist.', 401));
     }
-
-    // Log the current user for debugging
-    console.log('Authenticated user:', currentUser);
-
-    // Grant access to protected route
+    
+    const currentUser = userDoc.data();
+    console.log('Authenticated user:', currentUser);  // Log the current user for debugging
+    
+    // Attach the user to the request object for use in subsequent routes
     req.user = currentUser;
     next();
   } catch (error) {
-    next(error);
+    next(error);  // Pass the error to the error-handling middleware
   }
 };
 
