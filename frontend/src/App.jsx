@@ -12,7 +12,7 @@ import Profile from './Auth/Profile'; // Import Profile component
 import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
-import Dashboard from './Components/Dashboard';
+import Dashboard from './Components/Admin/Dashboard';
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
