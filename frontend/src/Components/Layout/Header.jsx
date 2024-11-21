@@ -8,7 +8,7 @@ const Header = () => {
   const { user } = useAuth(); // Get the current user
 
   return (
-    <Navbar variant="dark" expand="lg" className='navbar'>
+    <Navbar variant="dark" expand="lg" className="navbar">
       <Container>
         <Navbar.Brand href="/">
           <img
@@ -25,6 +25,8 @@ const Header = () => {
             <Nav.Link href="/products">Menu</Nav.Link>
             <Nav.Link href="/">Let's Connect</Nav.Link>
             <Nav.Link href="/">About Us</Nav.Link>
+          </Nav>
+          <Nav className="ms-auto">
             {user ? (
               <AccountMenu /> // Display AccountMenu if user is logged in
             ) : (

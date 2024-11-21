@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
             }
     
             const token = await user.getIdToken();
+            console.log("Custom Token:", token);
             setToken(token);
             setUser(user);
             localStorage.setItem('token', token); // Store token in local storage
@@ -106,66 +107,97 @@ export const AuthProvider = ({ children }) => {
             alert(error.message);
         }
     };
+    
     const registerWithEmail = async (email, password, username, avatarFile) => {
         try {
+            // Check if the email already exists in Firebase Authentication
+            const existingUser = await fetch(`http://localhost:5000/api/auth/check-email/${email}`);
+            const existingUserData = await existingUser.json();
+    
+            if (existingUserData.exists) {
+                // If user exists in Firebase, delete the user
+                await fetch(`http://localhost:5000/api/auth/delete-user/${email}`, {
+                    method: 'DELETE',
+                });
+                console.log(`User with email ${email} deleted from Firebase.`);
+            }
+    
+            // Create user with Firebase Authentication
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-    
-            if (!user) {
-                throw new Error("User registration failed. Please try again.");
-            }
-    
-            console.log("User registered:", user);
-    
+            
+            // Send email verification link
             await sendEmailVerification(user);
     
-            // Validate avatarFile
-            if (!avatarFile) {
-                throw new Error("Avatar file is missing.");
-            }
-    
-            // Upload avatar
-            let avatarURL = '';
-            try {
+            // Wait until email is verified (check on frontend)
+            alert('Please verify your email before continuing!');
+            
+            // Proceed after email is verified
+            if (user.emailVerified) {
+                // Upload avatar to Cloudinary via backend
                 const formData = new FormData();
                 formData.append('image', avatarFile);
     
                 const response = await fetch('http://localhost:5000/api/auth/upload-avatar', {
                     method: 'POST',
-                    body: formData,
+                    body: formData
                 });
     
                 if (!response.ok) {
-                    throw new Error("Avatar upload failed.");
+                    if (response.status === 500) {
+                        throw new Error('Internal Server Error');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to upload avatar');
+                    }
                 }
     
                 const data = await response.json();
-                avatarURL = data.secure_url;
-            } catch (error) {
-                console.error("Error uploading avatar:", error);
-                throw error;
+                const avatarURL = data.secure_url;
+    
+                // Prepare user details
+                const userDetails = {
+                    email: user.email,
+                    username: username,
+                    avatarURL: avatarURL,
+                    createdAt: new Date(),
+                    status: user.emailVerified ? 'verified' : 'unverified',
+                    password: password, // Include password
+                };
+    
+                // Log user details
+                console.log('User details to be saved:', userDetails);
+    
+                // Save user details to Firestore
+                await setDoc(doc(db, 'users', user.uid), userDetails);
+    
+                // Save user details to MongoDB
+                const mongoResponse = await fetch('http://localhost:5000/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userDetails),
+                });
+    
+                if (!mongoResponse.ok) {
+                    const mongoError = await mongoResponse.json();
+                    throw new Error(mongoError.message || 'Failed to save user to MongoDB');
+                }
+    
+                // Sign out the user immediately after registration
+                await signOut(auth);
+    
+                return 'Account created successfully! Please verify your email before logging in.';
+            } else {
+                return 'Please verify your email before proceeding.';
             }
-    
-            const userDetails = {
-                email: user.email,
-                username,
-                avatarURL,
-                createdAt: new Date(),
-                status: user.emailVerified ? 'verified' : 'unverified',
-            };
-    
-            console.log("Saving user details:", userDetails);
-    
-            await setDoc(doc(db, 'users', user.uid), userDetails);
-    
-            await signOut(auth);
-    
-            return 'Account created successfully! Please verify your email before logging in.';
         } catch (error) {
-            console.error("Error registering with email:", error);
+            console.error("Error registering with email: ", error);
             throw error;
         }
-    };    
+    };
+     
 
     const handleUpdate = async (updatedData) => {
         try {
@@ -231,14 +263,19 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await signOut(auth);
-            setToken(null);
-            setUser(null);
+          await signOut(auth);  // Firebase sign-out
+          
+          // Clear local storage
+          localStorage.removeItem('token');
+          
+          // Reset app state
+          setToken(null);
+          setUser(null);
         } catch (error) {
-            console.error("Error logging out: ", error);
-            alert('Failed to log out: ' + error.message);
+          console.error("Error logging out: ", error);
+          alert('Failed to log out: ' + error.message);
         }
-    };
+      };          
 
     return (
         <AuthContext.Provider value={{ user, token, login, logout, loginWithGoogle, registerWithEmail, handleUpdate, updateEmailAddress, resetPassword }}>

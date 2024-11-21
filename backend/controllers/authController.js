@@ -4,81 +4,138 @@ const User = require('../models/userModel');
 const cloudinary = require('../utils/cloudinary');
 const bcrypt = require('bcryptjs');
 
-exports.signup = [
-  upload.single('image'),
-  async (req, res) => {
-    const { email, password, username } = req.body;
-    const imageFile = req.file;
+exports.signup = async (req, res) => {
+  const { email, password, username } = req.body;
+  const imageFile = req.file; // Optional image, based on the frontend submission
 
-    if (!email || !password || !username) {
+  // Ensure email, password, and username are provided
+  if (!email || !password || !username) {
       return res.status(400).json({ message: 'Email, password, and username are required.' });
-    }
+  }
 
-    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
-    if (!validateEmail(email)) {
+  // Email validation regex
+  const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
+  if (!validateEmail(email)) {
       return res.status(400).json({ message: 'The email address is improperly formatted.' });
-    }
+  }
 
-    try {
+  try {
+      // Check if the email already exists in MongoDB
       const existingUser = await User.findOne({ email: email.trim().toLowerCase() });
       if (existingUser) {
-        return res.status(400).json({ message: 'The email address is already in use by another account.' });
+          return res.status(400).json({ message: 'The email address is already in use by another account.' });
       }
-      const existingFirebaseUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
-      if (existingFirebaseUser) {
-        return res.status(400).json({ message: 'The email address is already in use by another account.' });
-      }
-    } catch (error) {
-      if (error.code !== 'auth/user-not-found') {
-        return res.status(400).json({ message: error.message });
-      }
-    }
 
-    try {
+      // Create a new Firebase user
       const userRecord = await admin.auth().createUser({
-        email: email.trim().toLowerCase(),
-        password,
-        displayName: username,
+          email: email.trim().toLowerCase(),
+          password,
+          displayName: username,
       });
+
+      // Generate email verification link for the user
       const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
+
+      // Prepare image URL (if the image is provided by the user)
       let imageUrl = '';
       if (imageFile) {
-        const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
-        imageUrl = uploadResponse.secure_url;
+          const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
+          imageUrl = uploadResponse.secure_url;
       }
+
+      // Save user details in MongoDB
       const newUser = new User({
-        email: email.trim().toLowerCase(),
-        username,
-        firebaseUid: userRecord.uid,
-        imageUrl,
+          email: email.trim().toLowerCase(),
+          username,
+          firebaseUid: userRecord.uid,
+          imageUrl, // Optional field; will be empty if no image is uploaded
       });
       await newUser.save();
+
+      // Save user details in Firestore
       await db.collection('users').doc(userRecord.uid).set({
-        email: email.trim().toLowerCase(),
-        username,
-        firebaseUid: userRecord.uid,
-        imageUrl,
+          email: email.trim().toLowerCase(),
+          username,
+          firebaseUid: userRecord.uid,
+          imageUrl, // Optional field; will be empty if no image is uploaded
       });
-      res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
-    } catch (error) {
+
+      // Respond with a success message
+      res.status(201).json({
+          message: 'User created successfully. Please verify your email.',
+          user: userRecord,
+          emailVerificationLink,
+      });
+  } catch (error) {
+      // Handle errors and send error response
       res.status(400).json({ message: error.message });
-    }
   }
-];
+};
+
+// Check if email exists in Firebase Authentication
+exports.checkEmail = async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    // Check if user exists in Firebase Authentication
+    const userRecord = await admin.auth().getUserByEmail(email.trim().toLowerCase());
+    return res.status(200).json({ exists: true, uid: userRecord.uid });
+  } catch (error) {
+    // If the user doesn't exist in Firebase, return false
+    if (error.code === 'auth/user-not-found') {
+      return res.status(200).json({ exists: false });
+    }
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+// Delete a user by email from Firebase Authentication
+exports.deleteUser = async (req, res) => {
+  const { email } = req.params;
+
+  try {
+    // Get user by email
+    const userRecord = await admin.auth().getUserByEmail(email.trim().toLowerCase());
+    
+    // Delete the user from Firebase Authentication
+    await admin.auth().deleteUser(userRecord.uid);
+
+    return res.status(200).json({ message: `User with email ${email} deleted successfully` });
+  } catch (error) {
+    // Handle errors (user not found or other issues)
+    if (error.code === 'auth/user-not-found') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Authenticate the user using Firebase
+    // Authenticate the user using Firebase Authentication (get user details from Firebase)
     const userRecord = await admin.auth().getUserByEmail(email);
 
-    // Generate a Firebase ID token
-    const idToken = await admin.auth().createCustomToken(userRecord.uid);
+    // Fetch the user's information from Firestore using the Firebase UID
+    const userDoc = await db.collection('users').doc(userRecord.uid).get();
 
+    // Check if the user document exists
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: 'User not found in Firestore' });
+    }
+
+    const user = userDoc.data();
+
+    // Send the user information along with a success message
     res.status(200).json({
       message: 'User logged in successfully',
-      token: idToken,
+      user: {
+        username: user.username,
+        email: user.email,
+        status: user.status,  // Assuming status is a field in your user document
+        avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document
+      },
     });
   } catch (error) {
     console.error(error);
@@ -158,9 +215,9 @@ exports.uploadAvatar = [
   }
 ];
 
-// Controller function to get the currently logged-in user
 exports.getCurrentUser = async (req, res) => {
   try {
+    // Get token from authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -168,26 +225,35 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
+    console.log("Received token:", token);  // Log received token
 
     // Verify the Firebase custom token
     const decodedToken = await admin.auth().verifyIdToken(token);
+    console.log("Decoded token:", decodedToken);  // Log decoded token
 
-    const userId = decodedToken.uid;
+    const userId = decodedToken.uid;  // Get user ID from token
 
-    // Find the user in your database by Firebase UID
-    const user = await User.findOne({ firebaseUid: userId });
+    // Fetch the user from Firestore by UID
+    const userDoc = await db.collection('users').doc(userId).get();
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    // Log the document retrieval result
+    console.log("Firestore document data:", userDoc.exists ? userDoc.data() : 'No such document found');
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ message: 'User not found in Firestore' });
     }
 
+    // Get the user data from the document
+    const user = userDoc.data();
+
+    // Respond with user details
     res.status(200).json({
       message: 'User retrieved successfully',
       user: {
         username: user.username,
         email: user.email,
-        role: user.role,
-        userImage: user.userImage,
+        status: user.status,  // Assuming status is a field in your user document
+        avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document
       },
     });
   } catch (error) {
