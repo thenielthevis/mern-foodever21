@@ -2,7 +2,6 @@ const upload = require('../utils/multer');
 const { admin, db } = require('../utils/firebaseAdminConfig');
 const User = require('../models/userModel');
 const cloudinary = require('../utils/cloudinary');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 exports.signup = [
@@ -67,58 +66,23 @@ exports.signup = [
   }
 ];
 
-// Controller function to handle user login
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Ensure the password and email are provided
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
-  }
-
   try {
-    // Check if the user exists in the database
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
+    // Authenticate the user using Firebase
+    const userRecord = await admin.auth().getUserByEmail(email);
 
-    // Log the user document to debug password issue
-    console.log('User found:', user);
+    // Generate a Firebase ID token
+    const idToken = await admin.auth().createCustomToken(userRecord.uid);
 
-    // Check if the password field exists in the user document
-    if (!user.password) {
-      return res.status(400).json({ message: 'Password is missing in the user document' });
-    }
-
-    // Compare the provided password with the hashed password in the database
-    const isMatch = await(password, user.password);
-    // const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Generate a JWT token if authentication is successful
-    const token = jwt.sign(
-      { uid: user.firebaseUid, email: user.email, role: user.role }, // Payload
-      process.env.JWT_SECRET, // Secret key from your environment variables
-      { expiresIn: '1h' } // Set token expiration
-    );
-
-    // Respond with the user details and JWT token
     res.status(200).json({
       message: 'User logged in successfully',
-      user: {
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        userImage: user.userImage,
-      },
-      token: token, // Send the generated token
+      token: idToken,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(400).json({ message: 'Login failed' });
   }
 };
 
@@ -197,12 +161,24 @@ exports.uploadAvatar = [
 // Controller function to get the currently logged-in user
 exports.getCurrentUser = async (req, res) => {
   try {
-    const userId = req.user.uid; // Assuming user is attached to req.user by protect middleware
+    const authHeader = req.headers.authorization;
 
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized: No token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // Verify the Firebase custom token
+    const decodedToken = await admin.auth().verifyIdToken(token);
+
+    const userId = decodedToken.uid;
+
+    // Find the user in your database by Firebase UID
     const user = await User.findOne({ firebaseUid: userId });
 
     if (!user) {
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     res.status(200).json({
@@ -215,7 +191,7 @@ exports.getCurrentUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching user:", error.message);
-    res.status(400).json({ message: 'Failed to fetch user details' });
+    console.error('Error fetching user:', error.message);
+    res.status(500).json({ message: 'Failed to fetch user details' });
   }
 };

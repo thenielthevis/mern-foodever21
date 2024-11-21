@@ -110,53 +110,62 @@ export const AuthProvider = ({ children }) => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
-            await sendEmailVerification(user);
     
-            // Upload avatar to Cloudinary via backend
-            const formData = new FormData();
-            formData.append('image', avatarFile);
-    
-            const response = await fetch('http://localhost:5000/api/auth/upload-avatar', {
-                method: 'POST',
-                body: formData
-            });
-    
-            if (!response.ok) {
-                if (response.status === 500) {
-                    throw new Error('Internal Server Error');
-                } else {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to upload avatar');
-                }
+            if (!user) {
+                throw new Error("User registration failed. Please try again.");
             }
     
-            const data = await response.json();
-            const avatarURL = data.secure_url;
+            console.log("User registered:", user);
     
-            // Prepare user details
+            await sendEmailVerification(user);
+    
+            // Validate avatarFile
+            if (!avatarFile) {
+                throw new Error("Avatar file is missing.");
+            }
+    
+            // Upload avatar
+            let avatarURL = '';
+            try {
+                const formData = new FormData();
+                formData.append('image', avatarFile);
+    
+                const response = await fetch('http://localhost:5000/api/auth/upload-avatar', {
+                    method: 'POST',
+                    body: formData,
+                });
+    
+                if (!response.ok) {
+                    throw new Error("Avatar upload failed.");
+                }
+    
+                const data = await response.json();
+                avatarURL = data.secure_url;
+            } catch (error) {
+                console.error("Error uploading avatar:", error);
+                throw error;
+            }
+    
             const userDetails = {
                 email: user.email,
-                username: username,
-                avatarURL: avatarURL,
+                username,
+                avatarURL,
                 createdAt: new Date(),
-                status: user.emailVerified ? 'verified' : 'unverified'
+                status: user.emailVerified ? 'verified' : 'unverified',
             };
     
-            // Log user details
-            console.log('User details to be saved:', userDetails);
+            console.log("Saving user details:", userDetails);
     
-            // Save user details to Firestore
             await setDoc(doc(db, 'users', user.uid), userDetails);
     
-            // Sign out the user immediately after registration
             await signOut(auth);
     
             return 'Account created successfully! Please verify your email before logging in.';
         } catch (error) {
-            console.error("Error registering with email: ", error);
+            console.error("Error registering with email:", error);
             throw error;
         }
-    };  
+    };    
 
     const handleUpdate = async (updatedData) => {
         try {
