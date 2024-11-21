@@ -4,15 +4,15 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBFqDm1tctixMmmUBoAnszZ-vckiLX21M4",
-  authDomain: "foodever21-7618e.firebaseapp.com",
-  projectId: "foodever21-7618e",
-  storageBucket: "foodever21-7618e.appspot.com", // Corrected storage bucket URL
-  messagingSenderId: "396895111065",
-  appId: "1:396895111065:web:11a4ba9614c8c337b73508",
-  measurementId: "G-1G8EL43NMD"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
