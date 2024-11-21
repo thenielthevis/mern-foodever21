@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.1",
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@hookform/resolvers": "^3.9.1",
     "@mui/icons-material": "^6.1.7",
     "@mui/material": "^6.1.7",
     "@react-spring/web": "^9.7.5",
+    "antd": "^5.22.1",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "countries-list": "^3.1.1",

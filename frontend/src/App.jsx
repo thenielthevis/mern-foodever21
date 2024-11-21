@@ -12,6 +12,7 @@ import Profile from './Auth/Profile'; // Import Profile component
 import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
+import Dashboard from './Components/Dashboard';
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -32,6 +33,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} /> {/* Add the profile route */}
           <Route path="/update-email" element={<UpdateEmail />} />
           <Route path="/change-password" element={<ChangePassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
         <Footer />
         <ToastContainer />
