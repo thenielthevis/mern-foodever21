@@ -383,6 +383,17 @@ exports.addToOrderList = async (req, res) => {
   }
 };
 
+// Add this function to get all users
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json({ users });
+  } catch (error) {
+    console.error('Error fetching users:', error.message);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
 exports.getAllUsers = async (req, res) => {
   try {
     // Fetch from MongoDB

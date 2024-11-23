@@ -129,7 +129,7 @@ export default function AccountMenu() {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem onClick={handleProfile}>
-          <Avatar /> Profile
+        <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32, border: '2px solid black' }} /> Profile
         </MenuItem>
         <MenuItem onClick={handleOrderHistory}>
           <ListItemIcon>

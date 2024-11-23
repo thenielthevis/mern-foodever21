@@ -9,6 +9,7 @@ const {
     getSingleProduct,
     updateProduct,
     deleteProduct,
+    deleteProductsBulks,
     createProductReview,
     getProductReviews,
     deleteReview,
@@ -35,5 +36,6 @@ router.post('/product/:id/review', protect, createProductReview);
 router.post('/admin/product/create', upload.array('images', 10), createProduct);
 router.put('/admin/product/update/:id', updateProduct);
 router.delete('/admin/product/delete/:id', deleteProduct);
+router.post('/admin/products/deletebulk', deleteProductsBulks);
 
 module.exports = router;

@@ -1,36 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Typography, Button } from "antd";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import registerImage from "../assets/register.png";
-import { useAuth } from "../context/AuthContext";
-import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as Yup from 'yup';
-import { TextField, InputAdornment, LinearProgress, Box, Alert } from '@mui/material';
-import EmailIcon from '@mui/icons-material/Email';
+import { Box, Card, Typography, TextField, Button, Alert, InputAdornment, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
-import '../Auth.css'; // Import the CSS file
-
-function LinearProgressWithLabel(props) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Box sx={{ width: '100%', mr: 1 }}>
-        <LinearProgress variant="determinate" {...props} />
-      </Box>
-      <Box sx={{ minWidth: 35 }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          {`${Math.round(props.value)}%`}
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
+import EmailIcon from '@mui/icons-material/Email';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useForm, Controller } from 'react-hook-form';
+import { auth, googleProvider } from "../firebaseConfig"; // Import from your config
+import { signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
+import { useAuth } from "../context/AuthContext";
+import '../Auth.css';
 
 const Login = () => {
     const { loading, login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
     const [progress, setProgress] = useState(0);
     const [alert, setAlert] = useState({ type: '', message: '' });
+    const [isResetDialogOpen, setResetDialogOpen] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
 
     // Yup validation schema
     const LoginSchema = Yup.object().shape({
@@ -52,8 +40,7 @@ const Login = () => {
             };
         }
     }, [loading]);
-
-    // Handle form submission
+    
     const onSubmit = async (values) => {
         console.log("Received values of form: ", values);
         try {
@@ -67,84 +54,88 @@ const Login = () => {
 
     const handleGoogleLogin = async () => {
         try {
-            await loginWithGoogle();
-            setAlert({ type: 'success', message: 'Google login successful!' });
+            await signInWithPopup(auth, googleProvider);
+            setAlert({ type: "success", message: "Google login successful!" });
             navigate("/"); // Redirect to dashboard after successful login
         } catch (error) {
-            setAlert({ type: 'error', message: 'Google login failed. Please try again.' });
+            setAlert({ type: "error", message: "Google login failed. Please try again." });
             console.error("Google login failed", error);
         }
     };
 
+    const handleForgotPassword = async () => {
+        try {
+            await sendPasswordResetEmail(auth, resetEmail);
+            setAlert({ type: "success", message: "Password reset email sent!" });
+            setResetDialogOpen(false);
+        } catch (error) {
+            setAlert({ type: "error", message: 'Failed to send reset email: ${error.message} '});
+        }
+    };
+
     return (
-        <Card className="form-container">
-            <div className="flex-container">
-                <div className="image-content">
+        <Card sx={{ maxWidth: 500, mx: 'auto', mt: 5, p: 3 }}>
+            <Box className="flex-container">
+            <div className="image-content">
                     <img src={registerImage} className="auth-loginimage" alt="Register" />
                 </div>
-                <div className="form-content">
-                    <Typography.Title level={3} strong className="title">
+                <Box className="form-content">
+                    <Typography variant="h3" component="h1" className="title">
                         Sign In
-                    </Typography.Title>
-                    <Typography.Title level={3} strong className="slogan">
-                        Sizzle, Twirl, Bite! Where Flavor Meets Every Craving!
-                    </Typography.Title>
-
+                    </Typography>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div>
-                            <label htmlFor="email">Email</label>
-                            <Controller
-                                name="email"
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        fullWidth
-                                        size="large"
-                                        placeholder="Enter your Email"
-                                        variant="outlined"
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <EmailIcon />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        error={!!errors.email}
-                                        helperText={errors.email ? errors.email.message : ''}
-                                    />
-                                )}
+                        <Controller
+                                    name="email"
+                                    control={control}
+                                    render={({ field }) => (
+                            <TextField
+                                {...field}
+                                label="Email"
+                                fullWidth
+                                margin="normal"
+                                required
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <EmailIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                error={!!errors.email}
+                                helperText={errors.email ? errors.email.message : ''}
                             />
+                            )}
+                        />
                         </div>
+
                         <div>
-                            <label htmlFor="password">Password</label>
-                            <Controller
-                                name="password"
-                                control={control}
-                                render={({ field }) => (
-                                    <TextField
-                                        {...field}
-                                        fullWidth
-                                        type="password"
-                                        size="large"
-                                        placeholder="Enter your Password"
-                                        variant="outlined"
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <LockIcon />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                        error={!!errors.password}
-                                        helperText={errors.password ? errors.password.message : ''}
-                                    />
-                                )}
+                        <Controller
+                                    name="password"
+                                    control={control}
+                                    render={({ field }) => (
+                            <TextField
+                                {...field}
+                                label="Password"
+                                fullWidth
+                                margin="normal"
+                                required
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <LockIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                error={!!errors.password}
+                                helperText={errors.password ? errors.password.message : ''}
                             />
+                            )}
+                        />
                         </div>
 
                         {alert.message && <Alert severity={alert.type}>{alert.message}</Alert>}
-
+                    
                         <div>
                             {loading ? (
                                 <Box sx={{ width: '100%' }}>
@@ -162,7 +153,6 @@ const Login = () => {
                                 Sign In with Google
                             </Button>
                         </div>
-                        
                         <div>
                             <Link to="/register" className="link">
                                 <Button variant="contained" size="large" className="btn">
@@ -170,9 +160,35 @@ const Login = () => {
                                 </Button>
                             </Link> 
                         </div>
+                        <Typography sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "blue" }}
+                            onClick={() => setResetDialogOpen(true)}
+                        >
+                            Forgot your password?
+                        </Typography>
                     </form>
-                </div>
-            </div>
+                        <Dialog open={isResetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogContent>
+                        <TextField
+                            label="Enter your email"
+                            type="email"
+                            fullWidth
+                            margin="dense"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                        />
+                        </DialogContent>
+                        <DialogActions>
+                        <Button onClick={() => setResetDialogOpen(false)} color="secondary">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleForgotPassword} color="primary">
+                            Send Reset Link
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                </Box>
+            </Box>
         </Card>
     );
 };

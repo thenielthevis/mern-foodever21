@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Box from '@mui/material/Box';
@@ -50,14 +50,8 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (sortOrder) {
-      sortProducts(sortOrder);
-    }
-  }, [sortOrder, products]);
-
-  const sortProducts = (order) => {
-    let sortedProducts = [...products];
+  const sortProducts = (products, order) => {
+    let sortedProducts = [...products]; // Create a new copy
     switch (order) {
       case 'low-to-high':
         sortedProducts.sort((a, b) => a.price - b.price);
@@ -74,7 +68,7 @@ const Products = () => {
       default:
         break;
     }
-    setProducts(sortedProducts);
+    return sortedProducts;
   };
 
   const handleSortChange = (event) => {
@@ -94,13 +88,19 @@ const Products = () => {
     setRatingFilter(newValue);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-    const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
-    return categoryMatch && ratingMatch;
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+      const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
+      return categoryMatch && ratingMatch;
+    });
+  }, [products, selectedCategories, ratingFilter]);
 
-  const paginatedProducts = filteredProducts.slice(0, visibleProducts);
+  const sortedAndFilteredProducts = useMemo(() => {
+    return sortProducts(filteredProducts, sortOrder);
+  }, [filteredProducts, sortOrder]);
+
+  const paginatedProducts = sortedAndFilteredProducts.slice(0, visibleProducts);
 
   const handleLoadMore = () => {
     if (loadingMore) return;
