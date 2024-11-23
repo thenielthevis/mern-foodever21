@@ -1,94 +1,3 @@
-// const upload = require('../utils/multer'); // Correctly import multer from utils/multer
-// const { admin, db } = require('../utils/firebaseAdminConfig');
-// const User = require('../models/userModel');
-// const cloudinary = require('../utils/cloudinary'); // Import Cloudinary config
-
-// exports.signup = [
-//   upload.single('image'), // Expect a single file upload with field name "image"
-//   async (req, res) => {
-//     console.log("Received signup request with data:", req.body);
-
-//     const { email, password, username } = req.body;
-//     const imageFile = req.file; // Access the uploaded file (if any)
-
-//     // Check if required fields are provided
-//     if (!email || !password || !username) {
-//       console.log("Missing required fields. Email:", email, "Password:", password, "Username:", username);
-//       return res.status(400).json({ message: 'Email, password, and username are required.' });
-//     }
-
-//     // Validate email format
-//     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim().toLowerCase());
-//     if (!validateEmail(email)) {
-//       console.log("Invalid email format:", email);
-//       return res.status(400).json({ message: 'The email address is improperly formatted.' });
-//     }
-
-//     try {
-//       // Check if user already exists
-//       const existingUser = await admin.auth().getUserByEmail(email.trim().toLowerCase());
-//       if (existingUser) {
-//         console.log("User already exists with email:", email);
-//         return res.status(400).json({ message: 'The email address is already in use by another account.' });
-//       }
-//     } catch (error) {
-//       if (error.code !== 'auth/user-not-found') {
-//         console.error("Error checking existing user. Email:", email, "Error:", error.message);
-//         return res.status(400).json({ message: error.message });
-//       }
-//     }
-
-//     try {
-//       // Create a new user in Firebase Authentication
-//       const userRecord = await admin.auth().createUser({
-//         email: email.trim().toLowerCase(),
-//         password,
-//         displayName: username,
-//       });
-//       console.log("User created in Firebase Authentication:", userRecord);
-
-//       // Generate email verification link
-//       const emailVerificationLink = await admin.auth().generateEmailVerificationLink(email.trim().toLowerCase());
-//       console.log("Email verification link generated:", emailVerificationLink);
-
-//       // Optionally, send the verification email using a custom email service
-//       // await sendCustomVerificationEmail(email.trim().toLowerCase(), emailVerificationLink);
-
-//       // Upload image to Cloudinary (if provided)
-//       let imageUrl = '';
-//       if (imageFile) {
-//         const uploadResponse = await cloudinary.uploader.upload(imageFile.path, { folder: 'user_images' });
-//         imageUrl = uploadResponse.secure_url;
-//         console.log("Image uploaded to Cloudinary:", imageUrl);
-//       }
-
-//       // Save user data to MongoDB
-//       const newUser = new User({
-//         email: email.trim().toLowerCase(),
-//         username,
-//         firebaseUid: userRecord.uid,
-//         imageUrl, // Save the image URL if provided
-//       });
-//       await newUser.save();
-//       console.log("User data saved to MongoDB:", newUser);
-
-//       // Save user data to Firestore
-//       await db.collection('users').doc(userRecord.uid).set({
-//         email: email.trim().toLowerCase(),
-//         username,
-//         firebaseUid: userRecord.uid,
-//         imageUrl,
-//       });
-//       console.log("User data saved to Firestore");
-
-//       // Respond with success message and user details
-//       res.status(201).json({ message: 'User created successfully. Please verify your email.', user: userRecord, emailVerificationLink });
-//     } catch (error) {
-//       console.error("Error during signup. Email:", email, "Error:", error.message);
-//       res.status(400).json({ message: error.message });
-//     }
-//   }
-// ];
 const upload = require('../utils/multer');
 const { admin, db } = require('../utils/firebaseAdminConfig');
 const User = require('../models/userModel');
@@ -259,40 +168,47 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
-    console.log("Received token:", token);  // Log received token
+    console.log("Received token:", token); // Log received token
 
     // Verify the Firebase custom token
     const decodedToken = await admin.auth().verifyIdToken(token);
-    console.log("Decoded token:", decodedToken);  // Log decoded token
+    console.log("Decoded token:", decodedToken); // Log decoded token
 
-    const userId = decodedToken.uid;  // Get user ID from token
+    const firebaseUid = decodedToken.uid; // Firebase UID
 
-    // Fetch the user from Firestore by UID
-    const userDoc = await db.collection('users').doc(userId).get();
-
-    // Log the document retrieval result
-    console.log("Firestore document data:", userDoc.exists ? userDoc.data() : 'No such document found');
+    // Fetch user details from Firestore (Firebase)
+    const userDoc = await db.collection('users').doc(firebaseUid).get();
+    console.log(
+      "Firestore document data:",
+      userDoc.exists ? userDoc.data() : "No such document found"
+    );
 
     if (!userDoc.exists) {
-      return res.status(404).json({ message: 'User not found in Firestore' });
+      return res.status(404).json({ message: "User not found in Firestore" });
     }
 
-    // Get the user data from the document
-    const user = userDoc.data();
+    // Fetch user details from MongoDB using Firebase UID
+    const mongoUser = await User.findOne({ firebaseUid });
+    if (!mongoUser) {
+      return res.status(404).json({ message: "User not found in MongoDB" });
+    }
 
-    // Respond with user details
+    // Merge Firestore and MongoDB data
+    const user = {
+      username: mongoUser.username || userDoc.data().username,
+      email: mongoUser.email || userDoc.data().email,
+      status: mongoUser.status || userDoc.data().status,
+      avatarURL: mongoUser.userImage || userDoc.data().avatarURL,
+      role: mongoUser.role || "guest", // Default role to "guest" if not found
+    };
+
     res.status(200).json({
-      message: 'User retrieved successfully',
-      user: {
-        username: user.username,
-        email: user.email,
-        status: user.status,  // Assuming status is a field in your user document
-        avatarURL: user.avatarURL,  // Assuming avatarURL is a field in your user document
-      },
+      message: "User retrieved successfully",
+      user,
     });
   } catch (error) {
-    console.error('Error fetching user:', error.message);
-    res.status(500).json({ message: 'Failed to fetch user details' });
+    console.error("Error fetching user:", error.message);
+    res.status(500).json({ message: "Failed to fetch user details" });
   }
 };
 
