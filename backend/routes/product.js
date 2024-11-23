@@ -14,6 +14,7 @@ const {
     getProductReviews,
     deleteReview,
     getUserProductReview,
+    getUserAllReviews
 } = require('../controllers/product');
 
 // USER
@@ -21,16 +22,11 @@ const {
 router.get('/products', getProducts);
 router.get('/product/:id', getSingleProduct);
 
-router.get('/product/user-review', protect, getUserProductReview); // Must come before '/product/:id'
-
-// Fetch all reviews for a product
-router.get('/product/reviews', getProductReviews);
-
-// Fetch a single product
-router.get('/product/:id', getSingleProduct);
-
-// Create Review (Protected route - requires authentication)
+// Fetch a user's review for a specific product
+router.get('/product/:productId/my-review', protect, getUserProductReview);
+router.get('/product/user-reviews', protect, getUserAllReviews);
 router.post('/product/:id/review', protect, createProductReview);
+router.get('/product/reviews', getProductReviews);
 
 // ADMIN
 router.post('/admin/product/create', upload.array('images', 10), createProduct);
