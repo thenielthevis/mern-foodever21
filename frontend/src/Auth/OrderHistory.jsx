@@ -39,13 +39,13 @@ const OrderHistory = () => {
       try {
         setLoading(true);
         setError(null);
-
+  
         Swal.fire({
           title: 'Loading order history...',
           allowOutsideClick: false,
           didOpen: () => Swal.showLoading(),
         });
-
+  
         const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
           if (!currentUser) {
             setError('User is not logged in');
@@ -53,14 +53,14 @@ const OrderHistory = () => {
             setLoading(false);
             return;
           }
-
+  
           const token = await currentUser.getIdToken();
-
+  
           const userDetailsResponse = await axios.get(
             `${import.meta.env.VITE_API}/get-user-id`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-
+  
           const userId = userDetailsResponse.data.user_id;
           if (!userId) {
             setError('Unable to fetch user information.');
@@ -68,17 +68,34 @@ const OrderHistory = () => {
             setLoading(false);
             return;
           }
-
-          const orderResponse = await axios.get(
-            `${import.meta.env.VITE_API}/user-orders/${userId}`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          setOrderHistory(orderResponse.data.orders);
-          Swal.close();
-          setLoading(false);
+  
+          try {
+            const orderResponse = await axios.get(
+              `${import.meta.env.VITE_API}/user-orders/${userId}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+  
+            if (orderResponse.data.orders.length === 0) {
+              setError('No history.');
+              Swal.close();
+              setLoading(false);
+              return;
+            }
+  
+            setOrderHistory(orderResponse.data.orders);
+            Swal.close();
+            setLoading(false);
+          } catch (orderError) {
+            if (orderError.response?.status === 404) {
+              setError('No history.');
+              Swal.close();
+              setLoading(false);
+            } else {
+              throw orderError;
+            }
+          }
         });
-
+  
         return () => unsubscribe();
       } catch (error) {
         console.error('Error fetching order history:', error);
@@ -87,9 +104,9 @@ const OrderHistory = () => {
         setLoading(false);
       }
     };
-
+  
     fetchOrderHistory();
-  }, []);
+  }, []);  
 
   const handleToggleRow = (rowId) => {
     setExpandedRow(expandedRow === rowId ? null : rowId);
@@ -149,8 +166,8 @@ const OrderHistory = () => {
   return (
     <Box sx={{ p: 4 }}>
       <Typography
-        variant="h4"
-        sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center', color: 'white' }}
+        variant="h5"
+        sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center', color: 'white', fontFamily: 'Montserrat' }}
       >
         Order History
       </Typography>

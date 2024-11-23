@@ -87,7 +87,7 @@ export default function AccountMenu() {
             aria-expanded={open ? 'true' : undefined}
           >
             <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
-            <span style={{color: 'gold'}}>{user?.username}</span>
+            <span style={{color: 'white', marginLeft: '10px'}}>{user?.username}</span>
           </IconButton>
         </Tooltip>
       </Box>

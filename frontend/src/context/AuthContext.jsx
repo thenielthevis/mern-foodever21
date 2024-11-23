@@ -97,7 +97,6 @@ export const AuthProvider = ({ children }) => {
     
             // Step 3: Send email verification
             await sendEmailVerification(user);
-            alert('A verification email has been sent. Please verify your email before proceeding!');
     
             // Step 4: Handle avatar upload (if provided)
             let avatarURL = '';

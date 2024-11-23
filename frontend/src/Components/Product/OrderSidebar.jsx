@@ -137,25 +137,6 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
   
     if (result.isConfirmed) {
       try {
-        // Simulate sending the selected items to the backend for processing
-        const token = await user.getIdToken();
-        await axios.post(
-          `${import.meta.env.VITE_API}/place-order`,
-          { 
-            userId: user.uid, // Pass the user's Firebase UID
-            products: selectedItems.map(order => ({
-              productId: order.product.id,
-              quantity: order.quantity,
-            })),
-            paymentMethod: "cash_on_delivery",
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-  
         // Remove purchased items from the order list
         setOrderList((prev) =>
           prev.filter((order) => !selectedItems.includes(order))
