@@ -21,13 +21,14 @@ import {
 } from '@mui/material';
 
 export default function AccountMenu() {
-  const { logout } = useAuth(); // Get the logout function from context
-  const [user, setUser] = React.useState(null); // Store user data
-  const navigate = useNavigate(); // Use React Router's useNavigate hook
+  const { logout } = useAuth();
+  const [user, setUser] = React.useState(null);
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+  const userRole = localStorage.getItem('role');
+// console.log('User Role:', userRole);
 
-  // Fetch current user data when the component mounts
   React.useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -140,6 +141,7 @@ export default function AccountMenu() {
           textAlign: 'center',
           p: 2,
           borderBottom: '1px solid #ddd',
+          backgroundColor: '#f9f9f9',
         }}
       >
         <Avatar
@@ -182,18 +184,6 @@ export default function AccountMenu() {
           </ListItemIcon>
           Edit Profile
         </MenuItem>
-        <MenuItem onClick={handleOrderHistory}>
-          <ListItemIcon>
-            <ListAltIcon fontSize="small" />
-          </ListItemIcon>
-          Order History
-        </MenuItem>
-        <MenuItem onClick={handleDashboard}>
-          <ListItemIcon>
-            <DashboardIcon fontSize="small" />
-          </ListItemIcon>
-          Dashboard
-        </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>
             <Email fontSize="small" />
@@ -207,7 +197,23 @@ export default function AccountMenu() {
           Change Password
         </MenuItem>
 
-        {/* Divider */}
+        <Divider />
+        {userRole === 'user' && (
+        <MenuItem onClick={handleOrderHistory}>
+          <ListItemIcon>
+            <ListAltIcon fontSize="small" />
+          </ListItemIcon>
+          Order History
+        </MenuItem>
+        )}
+        {userRole === 'admin' && (
+          <MenuItem onClick={handleDashboard}>
+            <ListItemIcon>
+              <DashboardIcon fontSize="small" />
+            </ListItemIcon>
+            Dashboard
+          </MenuItem>
+        )}
         <Divider />
 
         <MenuItem onClick={handleLogout}>

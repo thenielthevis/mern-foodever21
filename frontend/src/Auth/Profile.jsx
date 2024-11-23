@@ -67,17 +67,17 @@ const Profile = () => {
 
   return (
     <Box className="profile-container" sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <Card className="profile-card" sx={{ width: '100%', maxWidth: 600, p: 3 }}>
+      <Card className="profile-card" sx={{ width: '100%', maxWidth: 600, p: 10, }}>
         <Box className="profile-avatar-container" sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <img
             src={userData.avatarURL || '/images/default-avatar.png'}
             alt="User Avatar"
             className="profile-avatar"
-            style={{ width: 150, height: 150, borderRadius: '50%' }}
+            style={{ width: 100, height: 100, borderRadius: '50%', border: '4px solid gray', }}
           />
         </Box>
         <CardContent className="profile-info" sx={{ textAlign: 'center' }}>
-          <Typography gutterBottom variant="h5" component="div" sx={{ mb: 2 }}>
+          <Typography gutterBottom variant="h5" component="div" sx={{ mb: 2, marginTop: 5 }}>
             {userData.username}
           </Typography>
           <Typography variant="body2" className="profile-info-text" sx={{ mb: 2 }}>

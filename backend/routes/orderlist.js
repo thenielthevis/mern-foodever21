@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const protect = require('../middleware/protect');  // Assuming you have a middleware for protected routes
+const protect = require('../middleware/protect');
+const adminProtect = require('../middleware/adminprotect');
+const userProtect = require('../middleware/userprotect');
 const { addToOrderList,
     getUserId,
     getOrderListCount,

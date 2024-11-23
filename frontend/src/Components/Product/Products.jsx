@@ -7,6 +7,7 @@ import Toast from "../Layout/Toast";
 import Swal from 'sweetalert2';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import api from '../../utils/api';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -30,22 +31,29 @@ const Products = () => {
 
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API}/products`);
+        const token = localStorage.getItem("token"); // Check if a token exists (for authenticated users)
+        
+        // Configure headers conditionally
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    
+        const response = await axios.get(`${import.meta.env.VITE_API}/products`, { headers });
+        
         if (response.data && response.data.products) {
-          setProducts(response.data.products);
+          setProducts(response.data.products); // Set the products if available
         } else {
           console.error("No products data found");
           Toast("No products available", "error");
         }
-        setLoading(false);
+        
+        setLoading(false); // Stop loading state
         Swal.close();
       } catch (error) {
         console.error("Error fetching products:", error);
-        setLoading(false);
+        setLoading(false); // Stop loading state
         Swal.close();
         Toast("Failed to load products", "error");
       }
-    };
+    };    
 
     fetchProducts();
   }, []);

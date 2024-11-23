@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const protect = require('../middleware/protect');
+const adminProtect = require('../middleware/adminprotect');
+const userProtect = require('../middleware/userprotect');
 
 const { placeOrder,
     getUserOrders,
