@@ -13,6 +13,8 @@ import Profile from './Auth/Profile';
 import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
+import Dashboard from "./Components/Dashboard";
+import EnhancedTable from "./Components/admin/Usertable"; // Import the UserTable component
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -103,6 +105,8 @@ const AppContent = () => {
         <Route path="/update-email" element={<UpdateEmail />} />
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin/users" element={<EnhancedTable />} /> {/* Add the UserTable route */}
       </Routes>
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />

@@ -13,6 +13,9 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  Button,
+  Modal,
+  TextField,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -24,6 +27,10 @@ const OrderHistory = () => {
   const [expandedRow, setExpandedRow] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewProduct, setReviewProduct] = useState(null); // Stores product details being reviewed
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
 
   useEffect(() => {
     const fetchOrderHistory = async () => {
@@ -86,6 +93,64 @@ const OrderHistory = () => {
     setExpandedRow(expandedRow === rowId ? null : rowId);
   };
 
+  const handleOpenReviewModal = async (product) => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/product/user-review?productId=${product.productId._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      const existingReview = response.data.review;
+  
+      setReviewProduct(product);
+      setReviewText(existingReview ? existingReview.comment : '');
+      setReviewRating(existingReview ? existingReview.rating : 0);
+      setReviewModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching user review:', error);
+      alert('Failed to fetch review. You can add a new review.');
+      setReviewProduct(product);
+      setReviewText('');
+      setReviewRating(0);
+      setReviewModalOpen(true);
+    }
+  };    
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false);
+    setReviewProduct(null);
+    setReviewText('');
+    setReviewRating(0);
+  };
+
+  const handleSubmitReview = async () => {
+    try {
+      const token = await auth.currentUser.getIdToken();
+      await axios.post(
+        `${import.meta.env.VITE_API}/product/${reviewProduct.productId._id}/review`,
+        {
+          rating: reviewRating,
+          comment: reviewText,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      handleCloseReviewModal();
+      alert('Review submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review.');
+    }
+  };  
+
   if (loading) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -107,7 +172,10 @@ const OrderHistory = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center', color: 'white'}}>
+      <Typography
+        variant="h4"
+        sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center', color: 'white' }}
+      >
         Order History
       </Typography>
       <Paper sx={{ width: '100%', boxShadow: 3, minHeight: '70vh' }}>
@@ -127,7 +195,10 @@ const OrderHistory = () => {
             <TableBody>
               {orderHistory.map((order) => (
                 <React.Fragment key={order._id}>
-                  <TableRow hover sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}>
+                  <TableRow
+                    hover
+                    sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}
+                  >
                     <TableCell>{order._id}</TableCell>
                     <TableCell>
                       {new Date(order.timestamp).toLocaleDateString()}
@@ -177,23 +248,45 @@ const OrderHistory = () => {
                                 <TableCell>Quantity</TableCell>
                                 <TableCell>Price</TableCell>
                                 <TableCell>Total</TableCell>
+                                {order.status === 'completed' && (
+                                  <TableCell>Review</TableCell>
+                                )}
                               </TableRow>
                             </TableHead>
                             <TableBody>
-                              {order.products.map((product, index) => (
-                                <TableRow key={index}>
-                                  <TableCell>{product.productId.name}</TableCell>
-                                  <TableCell>{product.quantity}</TableCell>
-                                  <TableCell>
-                                    ₱{product.productId.price.toFixed(2)}
-                                  </TableCell>
-                                  <TableCell>
-                                    ₱{(
-                                      product.productId.price * product.quantity
-                                    ).toFixed(2)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                              {order.products?.map((product, index) => {
+                                const productName =
+                                  product.productId?.name || 'Unknown Product';
+                                const productPrice =
+                                  product.productId?.price || 0;
+
+                                return (
+                                  <TableRow key={index}>
+                                    <TableCell>{productName}</TableCell>
+                                    <TableCell>{product.quantity}</TableCell>
+                                    <TableCell>
+                                      ₱{productPrice.toFixed(2)}
+                                    </TableCell>
+                                    <TableCell>
+                                      ₱{(productPrice * product.quantity).toFixed(
+                                        2
+                                      )}
+                                    </TableCell>
+                                    {order.status === 'completed' && (
+                                      <TableCell>
+                                        <Button
+                                          variant="outlined"
+                                          onClick={() =>
+                                            handleOpenReviewModal(product)
+                                          }
+                                        >
+                                          Review
+                                        </Button>
+                                      </TableCell>
+                                    )}
+                                  </TableRow>
+                                );
+                              })}
                             </TableBody>
                           </Table>
                         </Box>
@@ -206,6 +299,57 @@ const OrderHistory = () => {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Review Modal */}
+      <Modal
+        open={reviewModalOpen}
+        onClose={handleCloseReviewModal}
+        aria-labelledby="review-modal-title"
+        aria-describedby="review-modal-description"
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 400,
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <Typography id="review-modal-title" variant="h6" component="h2">
+            Review {reviewProduct?.productId?.name || 'Product'}
+          </Typography>
+          <TextField
+            fullWidth
+            label="Review"
+            multiline
+            rows={4}
+            value={reviewText}
+            onChange={(e) => setReviewText(e.target.value)}
+            sx={{ my: 2 }}
+          />
+          <TextField
+            fullWidth
+            type="number"
+            label="Rating"
+            inputProps={{ min: 1, max: 5 }}
+            value={reviewRating}
+            onChange={(e) => setReviewRating(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSubmitReview}
+            sx={{ mt: 2 }}
+          >
+            Submit Review
+          </Button>
+        </Box>
+      </Modal>
     </Box>
   );
 };
