@@ -382,3 +382,22 @@ exports.addToOrderList = async (req, res) => {
     res.status(500).json({ message: 'Failed to add item to order list.' });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    // Fetch from MongoDB
+    const mongoUsers = await User.find();
+    
+    // Fetch from Firestore
+    const firestoreSnapshot = await db.collection('users').get();
+    const firestoreUsers = firestoreSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Combine the data
+    const allUsers = [...mongoUsers.map(user => user.toObject()), ...firestoreUsers];
+    
+    res.status(200).json({ message: 'Users fetched successfully.', users: allUsers });
+  } catch (error) {
+    console.error('Error fetching users:', error.message);
+    res.status(500).json({ message: 'Failed to fetch users.', error: error.message });
+  }
+};

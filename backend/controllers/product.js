@@ -184,7 +184,8 @@ exports.deleteProduct = async (req, res, next) => {
 //REVIEWS
 //create review
 exports.createProductReview = async (req, res, next) => {
-    const { rating, comment, productId } = req.body;
+    const { rating, comment } = req.body;
+    const productId = req.params.id; // Make sure this is used
 
     const review = {
         user: req.user._id,
@@ -231,6 +232,40 @@ exports.createProductReview = async (req, res, next) => {
         ratings: product.ratings,
         numOfReviews: product.numOfReviews,
     });
+};
+
+exports.getUserProductReview = async (req, res) => {
+    try {
+        const { productId } = req.query;
+        const userId = req.user._id; // Ensure req.user is populated by `protect`
+
+        if (!productId) {
+            return res.status(400).json({ message: 'Product ID is required.' });
+        }
+
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found.' });
+        }
+
+        // Find the review by the logged-in user
+        const userReview = product.reviews.find(
+            (review) => review.user && review.user.toString() === userId.toString()
+        );
+
+        if (!userReview) {
+            return res.status(404).json({ message: 'No review found for this product by the user.' });
+        }
+
+        return res.status(200).json({
+            success: true,
+            review: userReview,
+        });
+    } catch (error) {
+        console.error('Error fetching user review:', error);
+        return res.status(500).json({ message: 'Server error.' });
+    }
 };
 
 //get reviews
