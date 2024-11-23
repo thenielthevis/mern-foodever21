@@ -83,22 +83,27 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
         Toast("You must be logged in to add to the order list.", "error");
         return;
       }
-
+  
+      console.log("User object:", user);
+      console.log("Product ID:", product._id);
+      console.log("Quantity:", quantity);
+  
       const token = localStorage.getItem('token');
+  
       await axios.post(
         `${import.meta.env.VITE_API}/add-to-orderlist`,
         { product_id: product._id, user_id: user._id, quantity },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       Toast("Product added to order list!", "success");
       setModalOpen(false);
       onUpdateOrderCount();
     } catch (error) {
       console.error("Error adding product to order list:", error.response?.data || error.message);
-      Toast("Failed to add product to order list.", "error");
+      Toast(error.response?.data?.message || "Failed to add product to order list.", "error");
     }
-  };
+  };  
 
   if (loading) {
     return (

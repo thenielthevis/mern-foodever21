@@ -160,7 +160,6 @@ exports.uploadAvatar = [
 
 exports.getCurrentUser = async (req, res) => {
   try {
-    // Get token from authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -168,20 +167,11 @@ exports.getCurrentUser = async (req, res) => {
     }
 
     const token = authHeader.split(' ')[1];
-    console.log("Received token:", token); // Log received token
-
-    // Verify the Firebase custom token
     const decodedToken = await admin.auth().verifyIdToken(token);
-    console.log("Decoded token:", decodedToken); // Log decoded token
-
-    const firebaseUid = decodedToken.uid; // Firebase UID
+    const firebaseUid = decodedToken.uid;
 
     // Fetch user details from Firestore (Firebase)
     const userDoc = await db.collection('users').doc(firebaseUid).get();
-    console.log(
-      "Firestore document data:",
-      userDoc.exists ? userDoc.data() : "No such document found"
-    );
 
     if (!userDoc.exists) {
       return res.status(404).json({ message: "User not found in Firestore" });
@@ -189,17 +179,19 @@ exports.getCurrentUser = async (req, res) => {
 
     // Fetch user details from MongoDB using Firebase UID
     const mongoUser = await User.findOne({ firebaseUid });
+
     if (!mongoUser) {
       return res.status(404).json({ message: "User not found in MongoDB" });
     }
 
     // Merge Firestore and MongoDB data
     const user = {
+      _id: mongoUser._id, // Include MongoDB ID
       username: mongoUser.username || userDoc.data().username,
       email: mongoUser.email || userDoc.data().email,
       status: mongoUser.status || userDoc.data().status,
       avatarURL: mongoUser.userImage || userDoc.data().avatarURL,
-      role: mongoUser.role || "guest", // Default role to "guest" if not found
+      role: mongoUser.role || "guest",
     };
 
     res.status(200).json({
@@ -209,6 +201,29 @@ exports.getCurrentUser = async (req, res) => {
   } catch (error) {
     console.error("Error fetching user:", error.message);
     res.status(500).json({ message: "Failed to fetch user details" });
+  }
+};
+
+exports.saveFcmToken = async (req, res) => {
+  try {
+    const { userId, fcmToken } = req.body;
+
+    if (!userId || !fcmToken) {
+      return res.status(400).json({ message: 'User ID and FCM token are required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.fcmToken = fcmToken;
+    await user.save();
+
+    res.status(200).json({ message: 'FCM token saved successfully' });
+  } catch (error) {
+    console.error('Error saving FCM token:', error);
+    res.status(500).json({ message: 'Failed to save FCM token' });
   }
 };
 

@@ -235,9 +235,7 @@ const OrderHistory = () => {
                                 <TableCell>Quantity</TableCell>
                                 <TableCell>Price</TableCell>
                                 <TableCell>Total</TableCell>
-                                {order.status === 'completed' && (
-                                  <TableCell>Review</TableCell>
-                                )}
+                                {order.status === 'completed' && <TableCell>Review</TableCell>}
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -246,21 +244,59 @@ const OrderHistory = () => {
                                   <TableCell>{product.productId?.name || 'Unknown Product'}</TableCell>
                                   <TableCell>{product.quantity}</TableCell>
                                   <TableCell>₱{product.productId?.price?.toFixed(2)}</TableCell>
-                                  <TableCell>
-                                    ₱{(product.productId?.price * product.quantity).toFixed(2)}
-                                  </TableCell>
+                                  <TableCell>₱{(product.productId?.price * product.quantity).toFixed(2)}</TableCell>
                                   {order.status === 'completed' && (
                                     <TableCell>
-                                      <Button
-                                        variant="outlined"
-                                        onClick={() => handleOpenReviewModal(product)}
-                                      >
+                                      <Button variant="outlined" onClick={() => handleOpenReviewModal(product)}>
                                         Rate & Review
                                       </Button>
                                     </TableCell>
                                   )}
                                 </TableRow>
                               ))}
+                              {/* Calculate and display the subtotal, tax, shipping, and total */}
+                              {(() => {
+                                const subtotal = order.products.reduce(
+                                  (sum, product) => sum + product.productId?.price * product.quantity,
+                                  0
+                                );
+                                const taxRate = 0.05;
+                                const shippingRate = 0.10;
+                                const taxes = subtotal * taxRate;
+                                const shippingFee = subtotal * shippingRate;
+                                const total = subtotal + taxes + shippingFee;
+
+                                return (
+                                  <>
+                                    <TableRow>
+                                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                                        Subtotal
+                                      </TableCell>
+                                      <TableCell colSpan={2}>₱{subtotal.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                                        Shipping Fee
+                                      </TableCell>
+                                      <TableCell colSpan={2}>₱{shippingFee.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                                        Taxes
+                                      </TableCell>
+                                      <TableCell colSpan={2}>₱{taxes.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                    <TableRow>
+                                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                                        Grand Total
+                                      </TableCell>
+                                      <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                                        ₱{total.toFixed(2)}
+                                      </TableCell>
+                                    </TableRow>
+                                  </>
+                                );
+                              })()}
                             </TableBody>
                           </Table>
                         </Box>

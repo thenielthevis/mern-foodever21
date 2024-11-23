@@ -10,8 +10,8 @@ const {
     signup,
     checkEmail,  
     deleteUser,
-    getAllUsers, // Import the getAllUsers function
-    getUsers
+    getUsers,
+    getAllUsers,
 } = require('../controllers/authController');
 
 const router = express.Router();
@@ -24,7 +24,7 @@ router.put('/updateUser', protect, updateUser);
 router.post('/resetPassword', resetPassword);
 router.post('/upload-avatar', uploadAvatar);
 router.get('/me', protect, getCurrentUser);
-router.get('/users',getUsers);
+router.get('/users', getUsers);
 
 // Add the new routes for checking email and deleting user
 router.get('/check-email/:email', checkEmail);  // To check if email exists
