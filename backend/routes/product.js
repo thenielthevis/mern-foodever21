@@ -33,5 +33,6 @@ router.post('/admin/product/create', upload.array('images', 10), createProduct);
 router.put('/admin/product/update/:id', updateProduct);
 router.delete('/admin/product/delete/:id', deleteProduct);
 router.post('/admin/products/deletebulk', deleteProductsBulks);
+router.delete('/product/:productId/review/:reviewId', protect, deleteReview);
 
 module.exports = router;

@@ -16,6 +16,9 @@ const protect = async (req, res, next) => {
       return next(new createError('You are not logged in! Please log in to get access.', 401));
     }
 
+    // Log the encoded token
+    console.log('Encoded Token:', token);
+
     // Verify token using Firebase Admin SDK
     const decodedToken = await admin.auth().verifyIdToken(token);
     console.log('Decoded Token UID:', decodedToken.uid); // Log the decoded UID

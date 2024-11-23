@@ -40,10 +40,11 @@ const ProductTable = () => {
             const products = response.data.products.map((product) => ({
                 id: product._id,
                 name: product.name,
-                price: product.price, // Ensure price is a number
+                price: product.price,
                 category: product.category,
-                description: product.description, // Add description
-                images: product.images, // Add images
+                description: product.description,
+                images: product.images,
+                reviews: product.reviews || [],
                 action: product.status,
             }));
             setData(products);
@@ -65,6 +66,24 @@ const ProductTable = () => {
     // Handle image input changes
     const handleImageChange = (e) => {
         setImages(e.target.files);
+    };
+
+    // Handle delete review
+    const handleDeleteReview = async (productId, reviewId) => {
+        try {
+            const response = await axios.delete(`http://localhost:5000/api/v1/product/${productId}/review/${reviewId}`);
+            if (response.data.success) {
+                setAlertMessage('Review deleted successfully.');
+                setAlertSeverity('success');
+                setAlertOpen(true);
+                fetchProducts(); // Refresh product data
+            }
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            setAlertMessage('Error deleting review.');
+            setAlertSeverity('error');
+            setAlertOpen(true);
+        }
     };
 
     // Convert images to base64 strings
@@ -326,6 +345,44 @@ const handleBulkDeleteProducts = async () => {
                             ) : (
                                 <p>No images available</p>
                             )}
+                            <h4>Reviews:</h4>
+                        {product.reviews && product.reviews.length > 0 ? (
+                            product.reviews.map((review) => (
+                                <Box
+                                    key={review._id}
+                                    display="flex"
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    mb={2}
+                                    p={2}
+                                    bgcolor="#fff"
+                                    border="1px solid #ddd"
+                                    borderRadius="4px"
+                                    marginTop="10px"
+                                >
+                                    <Box>
+                                        <Typography variant="body1">
+                                            <strong>User:</strong> {review.name}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Comment:</strong> {review.comment}
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Rating:</strong> {review.rating}
+                                        </Typography>
+                                    </Box>
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        onClick={() => handleDeleteReview(product.id, review._id)}
+                                    >
+                                        Delete
+                                    </Button>
+                                </Box>
+                            ))
+                        ) : (
+                            <p>No reviews available</p>
+                        )}
                         </div>
                     </td>
                 </tr>

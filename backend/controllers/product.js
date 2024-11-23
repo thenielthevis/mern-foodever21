@@ -427,46 +427,58 @@ exports.getProductReviews = async (req, res) => {
 };
 
 //delete review
-exports.deleteReview = async (req, res, next) => {
-    const product = await Product.findById(req.query.productId);
+exports.deleteReview = async (req, res) => {
+  try {
+      const { productId, reviewId } = req.params;
 
-    if (!product) {
-        return res.status(404).json({
-            success: false,
-            message: 'Product not found',
-        });
-    }
+      // Find the product by its ID
+      const product = await Product.findById(productId);
 
-    const reviews = product.reviews.filter(
-        (review) => review._id.toString() !== req.query.id.toString()
-    );
+      if (!product) {
+          return res.status(404).json({
+              success: false,
+              message: 'Product not found',
+          });
+      }
 
-    const numOfReviews = reviews.length;
+      // Find the review to delete
+      const reviewIndex = product.reviews.findIndex(
+          (review) => review._id.toString() === reviewId
+      );
 
-    const ratings =
-        reviews.length > 0
-            ? reviews.reduce((acc, item) => item.rating + acc, 0) / reviews.length
-            : 0;
+      if (reviewIndex === -1) {
+          return res.status(404).json({
+              success: false,
+              message: 'Review not found',
+          });
+      }
 
-    await Product.findByIdAndUpdate(
-        req.query.productId,
-        {
-            reviews,
-            ratings,
-            numOfReviews,
-        },
-        {
-            new: true,
-            runValidators: true,
-            useFindAndModify: false,
-        }
-    );
+      // Remove the review
+      product.reviews.splice(reviewIndex, 1);
 
-    return res.status(200).json({
-        success: true,
-        message: 'Review deleted successfully',
-        reviews,
-        ratings,
-        numOfReviews,
-    });
+      // Recalculate ratings and numOfReviews
+      const numOfReviews = product.reviews.length;
+      const ratings =
+          numOfReviews > 0
+              ? product.reviews.reduce((acc, review) => acc + review.rating, 0) / numOfReviews
+              : 0;
+
+      // Update the product document
+      product.numOfReviews = numOfReviews;
+      product.ratings = ratings;
+
+      await product.save();
+
+      return res.status(200).json({
+          success: true,
+          message: 'Review deleted successfully',
+          product,
+      });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({
+          success: false,
+          message: 'Server error',
+      });
+  }
 };
