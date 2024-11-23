@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Box from '@mui/material/Box';
@@ -11,9 +11,12 @@ import StarBorderIcon from '@mui/icons-material/StarBorder';
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [sortOrder, setSortOrder] = useState('');
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [ratingFilter, setRatingFilter] = useState(null);
+  const [visibleProducts, setVisibleProducts] = useState(10);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,8 +50,8 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  const sortProducts = (unsortedProducts, order) => {
-    let sortedProducts = [...unsortedProducts];
+  const sortProducts = (products, order) => {
+    let sortedProducts = [...products]; // Create a new copy
     switch (order) {
       case 'low-to-high':
         sortedProducts.sort((a, b) => a.price - b.price);
@@ -85,17 +88,50 @@ const Products = () => {
     setRatingFilter(newValue);
   };
 
-  const filteredProducts = products
-    .filter((product) => {
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
       const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
       const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
       return categoryMatch && ratingMatch;
-    })
-    .sort((a, b) => {
-      // Apply sorting only on filtered products
-      const sorted = sortProducts([a, b], sortOrder);
-      return sorted.indexOf(a) - sorted.indexOf(b);
     });
+  }, [products, selectedCategories, ratingFilter]);
+
+  const sortedAndFilteredProducts = useMemo(() => {
+    return sortProducts(filteredProducts, sortOrder);
+  }, [filteredProducts, sortOrder]);
+
+  const paginatedProducts = sortedAndFilteredProducts.slice(0, visibleProducts);
+
+  const handleLoadMore = () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleProducts((prev) => prev + itemsPerPage);
+      setLoadingMore(false);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loading && !loadingMore) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '100px' }
+    );
+
+    const loadMoreElement = document.getElementById('load-more-trigger');
+    if (loadMoreElement) {
+      observer.observe(loadMoreElement);
+    }
+
+    return () => {
+      if (loadMoreElement) {
+        observer.unobserve(loadMoreElement);
+      }
+    };
+  }, [loading, loadingMore, visibleProducts]);
 
   if (loading) {
     return <p>Loading...</p>;
@@ -161,7 +197,7 @@ const Products = () => {
         </div>
 
         <div className="products-container">
-          {filteredProducts.map((product) => (
+          {paginatedProducts.map((product) => (
             <div
               key={product._id}
               className="product-card"
@@ -185,6 +221,8 @@ const Products = () => {
             </div>
           ))}
         </div>
+
+        <div id="load-more-trigger" style={{ height: '20px', marginTop: '20px' }}></div>
       </div>
     </div>
   );

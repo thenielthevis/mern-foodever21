@@ -245,7 +245,7 @@ exports.uploadAvatar = [
     } catch (error) {
       console.error("Error during image upload:", error.message);
       res.status(400).json({ message: error.message });
-    }
+    } 
   }
 ];
 
@@ -346,6 +346,40 @@ exports.getUserData = async (req, res) => {
   } catch (error) {
       console.error('Error fetching user data:', error.message);
       res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+exports.addToOrderList = async (req, res) => {
+  try {
+    const { userId, product_id, quantity } = req.body;
+
+    if (!userId || !product_id || !quantity) {
+      return res.status(400).json({ message: 'User ID, product ID, and quantity are required.' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Check if the product is already in the order list
+    const existingItem = user.orderlist.find(
+      item => item.product_id.toString() === product_id.toString()
+    );
+
+    if (existingItem) {
+      // Update quantity if item exists
+      existingItem.quantity += quantity;
+    } else {
+      // Add new item to the order list
+      user.orderlist.push({ product_id, quantity });
+    }
+
+    await user.save();
+    res.status(200).json({ message: 'Item added to order list successfully.', orderlist: user.orderlist });
+  } catch (error) {
+    console.error('Error adding to order list:', error);
+    res.status(500).json({ message: 'Failed to add item to order list.' });
   }
 };
 

@@ -1,10 +1,16 @@
+/* Default background for all routes */
 html, body, #root {
   background-image: url('/images/bg-img2.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
-  overflow-y: auto;
+}
+
+/* Remove background for specific routes */
+.no-background {
+  background-image: none !important;
+  background-color: #ffffff !important; /* Optional: Set a plain white background */
 }
 
 /* ----------------HEADER */

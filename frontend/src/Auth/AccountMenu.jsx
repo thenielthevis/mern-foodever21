@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
@@ -69,6 +70,10 @@ export default function AccountMenu() {
     navigate('/change-password'); // Navigate to change password page
   };
 
+  const handleOrderHistory = () => {
+    navigate('/order-history'); // Navigate to change password page
+  };
+
   return (
     <React.Fragment>
       <Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
@@ -82,7 +87,7 @@ export default function AccountMenu() {
             aria-expanded={open ? 'true' : undefined}
           >
             <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
-            <span>{user?.username}</span>
+            <span style={{color: 'gold'}}>{user?.username}</span>
           </IconButton>
         </Tooltip>
       </Box>
@@ -125,6 +130,12 @@ export default function AccountMenu() {
       >
         <MenuItem onClick={handleProfile}>
         <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32, border: '2px solid black' }} /> Profile
+        </MenuItem>
+        <MenuItem onClick={handleOrderHistory}>
+          <ListItemIcon>
+            <ListAltIcon fontSize="small" />
+          </ListItemIcon>
+          Order History
         </MenuItem>
         <MenuItem onClick={handleDashboard}>
           <ListItemIcon>
