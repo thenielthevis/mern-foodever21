@@ -47,14 +47,8 @@ const Products = () => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (sortOrder) {
-      sortProducts(sortOrder);
-    }
-  }, [sortOrder, products]);
-
-  const sortProducts = (order) => {
-    let sortedProducts = [...products];
+  const sortProducts = (unsortedProducts, order) => {
+    let sortedProducts = [...unsortedProducts];
     switch (order) {
       case 'low-to-high':
         sortedProducts.sort((a, b) => a.price - b.price);
@@ -71,7 +65,7 @@ const Products = () => {
       default:
         break;
     }
-    setProducts(sortedProducts);
+    return sortedProducts;
   };
 
   const handleSortChange = (event) => {
@@ -91,11 +85,17 @@ const Products = () => {
     setRatingFilter(newValue);
   };
 
-  const filteredProducts = products.filter((product) => {
-    const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
-    const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
-    return categoryMatch && ratingMatch;
-  });
+  const filteredProducts = products
+    .filter((product) => {
+      const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(product.category);
+      const ratingMatch = ratingFilter === null || product.ratings === ratingFilter;
+      return categoryMatch && ratingMatch;
+    })
+    .sort((a, b) => {
+      // Apply sorting only on filtered products
+      const sorted = sortProducts([a, b], sortOrder);
+      return sorted.indexOf(a) - sorted.indexOf(b);
+    });
 
   if (loading) {
     return <p>Loading...</p>;
@@ -139,55 +139,54 @@ const Products = () => {
 
           <h5>Ratings</h5>
           <Box sx={{ width: 200 }}>
-          <Slider
-            className="custom-slider"
-            size="small"
-            min={-1} // -1 represents "All Ratings"
-            max={5}
-            step={1}
-            value={ratingFilter === null ? -1 : ratingFilter} // Map null to -1 for the slider
-            onChange={(event, newValue) => setRatingFilter(newValue === -1 ? null : newValue)} // Map -1 back to null
-            aria-label="Rating Filter"
-            valueLabelDisplay="off" // Hide the value label
-          />
-          <Typography variant="caption">
-            {ratingFilter === null
-              ? 'All Products'
-              : ratingFilter === 0
-              ? 'Rating: 0'
-              : `Rating: ${ratingFilter}`}
-          </Typography>
-        </Box>
+            <Slider
+              className="custom-slider"
+              size="small"
+              min={-1}
+              max={5}
+              step={1}
+              value={ratingFilter === null ? -1 : ratingFilter}
+              onChange={(event, newValue) => setRatingFilter(newValue === -1 ? null : newValue)}
+              aria-label="Rating Filter"
+              valueLabelDisplay="off"
+            />
+            <Typography variant="caption">
+              {ratingFilter === null
+                ? 'All Products'
+                : ratingFilter === 0
+                ? 'Rating: 0'
+                : `Rating: ${ratingFilter}`}
+            </Typography>
+          </Box>
         </div>
 
-          <div className="products-container">
-            {filteredProducts.map((product) => (
-              <div
-                key={product._id}
-                className="product-card"
-                onClick={() => navigate(`/product/${product._id}`)}
-              >
-                <img src={product.images[0].url} alt={product.name} />
-                <div className="product-card-content">
-                  <h3>{product.name}</h3>
-                  <p className="product-price">₱{product.price}</p>
-                  <div className="product-rating">
-                    {Array.from({ length: 5 }, (_, index) =>
-                      index < product.ratings ? (
-                        <StarIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
-                      ) : (
-                        <StarBorderIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
-                      )
-                    )}
-                    <span className="product-numOfReviews">({product.numOfReviews})</span>
-                  </div>
+        <div className="products-container">
+          {filteredProducts.map((product) => (
+            <div
+              key={product._id}
+              className="product-card"
+              onClick={() => navigate(`/product/${product._id}`)}
+            >
+              <img src={product.images[0].url} alt={product.name} />
+              <div className="product-card-content">
+                <h3>{product.name}</h3>
+                <p className="product-price">₱{product.price}</p>
+                <div className="product-rating">
+                  {Array.from({ length: 5 }, (_, index) =>
+                    index < product.ratings ? (
+                      <StarIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                    ) : (
+                      <StarBorderIcon key={index} className="product-stars" style={{ color: '#FFD700' }} />
+                    )
+                  )}
+                  <span className="product-numOfReviews">({product.numOfReviews})</span>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-        
       </div>
+    </div>
   );
 };
 

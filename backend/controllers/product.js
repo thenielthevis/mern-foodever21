@@ -133,6 +133,7 @@ exports.updateProduct = async (req, res, next) => {
         } else {
             req.body.images = product.images;
         }
+        
 
         product = await Product.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -181,6 +182,26 @@ exports.deleteProduct = async (req, res, next) => {
     });
 }
 
+//Delete Bulks
+exports.deleteProductsBulks = async (req, res, next) => {
+    try {
+        const { ids } = req.body;
+        console.log('Deleting products with IDs:', ids); // Log the IDs being deleted
+        const result = await Product.deleteMany({ _id: { $in: ids } });
+        console.log('Delete result:', result); // Log the result of the delete operation
+        res.status(200).json({
+            success: true,
+            message: 'Products deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting products:', error); // Log the error
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting products',
+            error: error.message
+        });
+    }
+};
 //REVIEWS
 //create review
 exports.createProductReview = async (req, res, next) => {

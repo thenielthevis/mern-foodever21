@@ -10,6 +10,7 @@ const authRoute = require('./routes/authRoute');
 
 // Middleware
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "50mb" }));
 app.use(cors({
     origin: ['http://localhost:5000', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'DELETE', 'PUT'],

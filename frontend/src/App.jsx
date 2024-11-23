@@ -1,4 +1,3 @@
-// App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from './Components/Home';
@@ -8,18 +7,17 @@ import Products from './Components/Product/Products';
 import ProductDetail from './Components/Product/ProductDetails';
 import Login from './Auth/Login';
 import Register from './Auth/Register';
-import Profile from './Auth/Profile'; // Import Profile component
+import Profile from './Auth/Profile';
 import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
-import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
-import Dashboard from './Components/Admin/Dashboard';
+import { AuthProvider } from './context/AuthContext';
+import Dashboard from './Components/Dashboard'; // Update the import path
+import UserTable from './admin/User'; // Import the UserTable component
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import OverviewPage from './Components/Dashboard/pages/OverviewPage';
-import ProductsPage from './Components/Dashboard/pages/ProductsPage';
 
 const App = () => {
   return (
@@ -32,11 +30,11 @@ const App = () => {
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} /> {/* Add the profile route */}
+          <Route path="/profile" element={<Profile />} />
           <Route path="/update-email" element={<UpdateEmail />} />
           <Route path="/change-password" element={<ChangePassword />} />
-          <Route path="/dashboard" element={<OverviewPage />} />
-          <Route path="/products-page" element={<ProductsPage />} />
+          <Route path="/dashboard" element={<Dashboard />} /> {/* Add the dashboard route */}
+          <Route path="/users" element={<UserTable />} /> {/* Add the user table route */}
         </Routes>
         <Footer />
         <ToastContainer />
