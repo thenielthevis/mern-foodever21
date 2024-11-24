@@ -170,6 +170,46 @@ export const AuthProvider = ({ children }) => {
         }
     };    
 
+    const handleUpdate = async (updatedData) => {
+        try {
+            let avatarURL = user.photoURL;
+
+            if (updatedData.file) {
+                // Upload avatar to Cloudinary via backend
+                const formData = new FormData();
+                formData.append('image', updatedData.file);
+
+                const response = await fetch('http://localhost:5000/api/auth/upload-avatar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    if (response.status === 500) {
+                        throw new Error('Internal Server Error');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to upload avatar');
+                    }
+                }
+
+                const data = await response.json();
+                avatarURL = data.secure_url;
+            }
+
+            const userRef = doc(db, 'users', user.uid);
+            const { file, ...dataWithoutFile } = updatedData; // Exclude the file field
+            await setDoc(userRef, {
+                ...dataWithoutFile,
+                avatarURL,
+            }, { merge: true });
+
+            setUser((prevUser) => ({ ...prevUser, ...dataWithoutFile, photoURL: avatarURL }));
+        } catch (error) {
+            alert('Failed to update profile: ' + error.message);
+        }
+    };
+
     const updateEmailAddress = async (newEmail) => {
         try {
             await sendEmailVerification(auth.currentUser, { url: window.location.href });
@@ -203,7 +243,8 @@ export const AuthProvider = ({ children }) => {
                 login,
                 logout,
                 registerWithEmail,
-                updateEmailAddress
+                updateEmailAddress,
+                handleUpdate
             }}
         >
             {children}
