@@ -183,8 +183,8 @@ const handleDeleteProduct = (productId) => {
 };
 
 // Handle Bulk Delete Products with confirmation
-const handleBulkDeleteProducts = async () => {
-    if (selectedRows.length === 0) {
+const handleBulkDeleteProducts = async (idsToDelete) => {
+    if (!idsToDelete || idsToDelete.length === 0) {
         swal("No products selected for deletion!", {
             icon: "warning",
         });
@@ -201,10 +201,10 @@ const handleBulkDeleteProducts = async () => {
     .then(async (willDelete) => {
         if (willDelete) {
             try {
-                const response = await axios.post('http://localhost:5000/api/v1/admin/products/deletebulk', { ids: selectedRows });
+                const response = await axios.post('http://localhost:5000/api/v1/admin/products/deletebulk', { ids: idsToDelete });
                 if (response.data.success) {
-                    fetchProducts();  // Refresh products list
-                    swal("Poof! Your product has been deleted!", {
+                    fetchProducts(); // Refresh products list
+                    swal("Poof! Your selected products have been deleted!", {
                         icon: "success",
                     });
                 }
@@ -312,12 +312,11 @@ const handleBulkDeleteProducts = async () => {
     ];
 
     const options = {
-        selectableRows: 'multiple',  // Enable row selection for bulk delete
+        selectableRows: 'multiple',
         onRowsDelete: (rowsDeleted) => {
             const idsToDelete = rowsDeleted.data.map(d => data[d.dataIndex].id);
-            setSelectedRows(idsToDelete);
-            handleBulkDeleteProducts();
-            return false;  // Prevent default delete action
+            handleBulkDeleteProducts(idsToDelete); // Pass the IDs directly
+            return false; // Prevent default delete action
         },
         expandableRows: true,    // Enable expandable rows
         expandableRowsHeader: false,  // Hide expandable rows header

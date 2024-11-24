@@ -1,37 +1,75 @@
 import React from 'react';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, IconButton, Box } from '@mui/material';
-import HomeIcon from '@mui/icons-material/Home';
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  IconButton,
+  Box,
+  Typography,
+} from '@mui/material';
+import HomeIcon from '@mui/icons-material/Home'; // Use for Dashboard
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CloseIcon from '@mui/icons-material/Close';
-import { Link, useNavigate } from 'react-router-dom';
+import DashboardIcon from '@mui/icons-material/Dashboard'; // Icon for Dashboard
+import { Link } from 'react-router-dom';
 
 const Sidebar = ({ open, onClose }) => {
-  const navigate = useNavigate();
-
   return (
     <Drawer anchor="left" open={open} onClose={onClose}>
-      <Box
-        role="presentation"
-        onClick={onClose}
-        onKeyDown={onClose}
-        style={{ width: 250 }}
-      >
-        <Box display="flex" justifyContent="flex-end" p={1}>
-          <IconButton onClick={onClose}>
+      <Box role="presentation" style={{ width: 250 }}>
+        {/* Header Section */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          p={2}
+          sx={{ backgroundColor: '#FFD523', color: '#595260' }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            Admin Panel
+          </Typography>
+          <IconButton onClick={onClose} sx={{ color: '#595260' }}>
             <CloseIcon />
           </IconButton>
         </Box>
-       
+
         <Divider />
+
+        {/* Menu Items */}
         <List>
-          <ListItem button component={Link} to="/admin/orders-chart" onClick={() => navigate("/admin/orders-chart")}>
+          {/* Dashboard Link */}
+          <ListItem button component={Link} to="/admin/dashboard">
+            <ListItemIcon>
+              <DashboardIcon sx={{ color: '#595260' }} />
+            </ListItemIcon>
+            <ListItemText primary="Dashboard" />
+          </ListItem>
+
+          {/* Orders Chart Link */}
+          <ListItem button component={Link} to="/admin/orders-chart">
+            <ListItemIcon>
+              <ShoppingCartIcon sx={{ color: '#595260' }} />
+            </ListItemIcon>
             <ListItemText primary="Orders Chart" />
           </ListItem>
-          <ListItem button component={Link} to="/admin/status-table" onClick={() => navigate("/admin/status-table")}>
+
+          {/* Status Table Link */}
+          <ListItem button component={Link} to="/admin/status-table">
+            <ListItemIcon>
+              <HomeIcon sx={{ color: '#595260' }} />
+            </ListItemIcon>
             <ListItemText primary="Status Table" />
           </ListItem>
-          <ListItem button component={Link} to="/admin/products" onClick={() => navigate("/admin/products")}>
+
+          {/* Products Link */}
+          <ListItem button component={Link} to="/admin/products">
+            <ListItemIcon>
+              <Inventory2Icon sx={{ color: '#595260' }} />
+            </ListItemIcon>
             <ListItemText primary="Products" />
           </ListItem>
         </List>

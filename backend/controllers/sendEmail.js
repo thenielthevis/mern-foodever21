@@ -75,7 +75,7 @@ const sendOrderConfirmationEmail = async (email, orderDetails) => {
 
   // Create the email content with the details provided
   const emailContent = `
-    Thank you for your order!
+    Thank you for your order with FoodEver 21! We’re excited to get your order to you as soon as possible.
 
     Here are your order details:
 
@@ -88,6 +88,14 @@ const sendOrderConfirmationEmail = async (email, orderDetails) => {
     Grand Total: ₱${finalTotal.toFixed(2)}
 
     Payment Method: ${paymentMethod}
+    You can track your order or make changes to your details by logging into your account.
+
+    If you have any questions, please don’t hesitate to contact us at support@foodever21.com.
+
+    Thank you for choosing FoodEver 21!
+
+    Best regards,  
+    FoodEver 21 Team
   `;
 
   const mailOptions = {

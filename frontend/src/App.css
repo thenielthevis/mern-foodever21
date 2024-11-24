@@ -225,37 +225,77 @@ html, body, #root {
 
 /* PRODUCTS CONTAINER */
 .products-container {
-  margin: 0 0 20px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  justify-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+  gap: 20px; /* Add spacing between cards */
+  justify-content: center; /* Center align cards inside grid */
+  width: 100%;
 }
 
 /* PRODUCT CARD STYLES */
-.product-card {
-  width: 200px;
-  background-color: rgba(51, 51, 51, 0.8);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column; /* Ensure content stacks vertically */
-  justify-content: space-between; /* Push content to the top and bottom */
+/* Main container for sidebar and products */
+.products-content {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+  padding: 20px;
 }
 
-.product-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
+/* Sidebar styling */
+.products-sidebar {
+
+  padding: 20px;
+  color: #fff;
+  border-radius: 8px;
+}
+
+.products-sidebar h5 {
+  margin-bottom: 10px;
+  color: #ffd700;
+}
+
+.products-sidebar select,
+.products-sidebar input,
+.products-sidebar label {
+  margin-bottom: 10px;
+}
+
+/* Product list container */
+.product-list-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.products-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Creates 3 columns for wider screens */
+  gap: 20px; /* Spacing between product cards */
+  width: 100%; /* Make sure it takes up the full width of the container */
+  margin-top: 20px; /* Add some spacing above */
+}
+
+.product-card {
+  background: rgba(51, 51, 51, 0.8);
+  padding: 10px;
+  text-align: center;
+  border-radius: 8px;
 }
 
 .product-card img {
   width: 100%;
-  height: 200px;
+  height: 150px;
   object-fit: cover;
 }
+
+/* "No more products" message */
+.no-more-products {
+  margin-top: 20px;
+  color: #bbb;
+}
+
 
 .product-card-content {
   padding: 20px;

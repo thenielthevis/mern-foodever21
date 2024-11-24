@@ -24,8 +24,16 @@ const getOrdersData = async (req, res) => {
 const getAllOrders = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const query = {};
 
+   
+    if (startDate && isNaN(Date.parse(startDate))) {
+      return res.status(400).json({ message: "Invalid startDate format" });
+    }
+    if (endDate && isNaN(Date.parse(endDate))) {
+      return res.status(400).json({ message: "Invalid endDate format" });
+    }
+
+    const query = {};
     if (startDate) {
       query.createdAt = { $gte: new Date(startDate) };
     }
@@ -46,6 +54,12 @@ const getAllOrders = async (req, res) => {
       }
 
       order.products.forEach(product => {
+    
+        if (!product.productId) {
+          console.warn(`Product ID is null for order ${order._id}`);
+          return;
+        }
+
         const productId = product.productId._id.toString();
         if (!acc[month].products[productId]) {
           acc[month].products[productId] = { name: product.productId.name, quantity: 0 };
@@ -56,6 +70,7 @@ const getAllOrders = async (req, res) => {
       return acc;
     }, {});
 
+    // Format the grouped data into the required response structure
     const groupedOrders = Object.values(ordersByMonth).map(monthData => {
       const mostBoughtProduct = Object.values(monthData.products).reduce((max, product) => {
         return product.quantity > max.quantity ? product : max;
@@ -64,13 +79,14 @@ const getAllOrders = async (req, res) => {
       return {
         month: monthData.month,
         mostBoughtProduct: mostBoughtProduct.name,
-        quantity: mostBoughtProduct.quantity
+        quantity: mostBoughtProduct.quantity,
       };
     });
 
     res.json(groupedOrders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Error in getAllOrders:", error.stack); // Log full error details
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
