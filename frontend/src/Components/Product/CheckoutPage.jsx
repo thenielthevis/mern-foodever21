@@ -82,6 +82,69 @@ const CheckoutPage = () => {
     setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
   };
 
+  // const handlePlaceOrder = async () => {
+  //   if (!userId) {
+  //     Swal.fire({
+  //       icon: 'error',
+  //       title: 'Authentication Error',
+  //       text: 'Please log in to place an order.',
+  //     });
+  //     return;
+  //   }
+  
+  //   const payload = {
+  //     userId,
+  //     products: selectedItems.map((item) => ({
+  //       productId: item.product.id,
+  //       quantity: item.quantity,
+  //     })),
+  //     paymentMethod: shippingMethod.toLowerCase().replace(' ', '_'),
+  //   };
+  
+  //   console.log('Placing order with payload:', payload);
+  
+  //   try {
+  //     Swal.fire({
+  //       title: 'Placing Order...',
+  //       allowOutsideClick: false,
+  //       didOpen: () => {
+  //         Swal.showLoading();
+  //       },
+  //     });
+  
+  //     // Place the order
+  //     const response = await axios.post(`${import.meta.env.VITE_API}/place-order`, payload);
+  //     console.log('Order placed successfully:', response.data);
+  
+  //     // Remove ordered products from the order list
+  //     const productIds = selectedItems.map((item) => item.product.id);
+  //     console.log('Deleting ordered products with payload:', { userId, productIds });
+  
+  //     const deleteResponse = await axios({
+  //       method: 'delete',
+  //       url: `${import.meta.env.VITE_API}/delete-ordered-products`,
+  //       data: { userId, productIds },
+  //     });
+  //     console.log('Delete Response:', deleteResponse.data);
+  
+  //     Swal.fire({
+  //       icon: 'success',
+  //       title: 'Order Placed Successfully!',
+  //       text: `Your order ID is ${response.data.order._id}`,
+  //     });
+  
+  //     navigate('/', { state: { order: response.data.order } });
+  //   } catch (error) {
+  //     console.error('Error placing order:', error);
+  
+  //     Swal.fire({
+  //       icon: 'error',
+  //       title: 'Order Failed',
+  //       text: 'Something went wrong. Please try again.',
+  //     });
+  //   }
+  // };
+
   const handlePlaceOrder = async () => {
     if (!userId) {
       Swal.fire({
@@ -91,6 +154,16 @@ const CheckoutPage = () => {
       });
       return;
     }
+  
+    const taxRate = 0.05;  // 5% tax rate
+    const shippingRate = 0.10;  // 10% shipping rate
+  
+    // Calculate taxes and shipping fee based on the totalPrice
+    const taxes = totalPrice * taxRate;
+    const shippingFee = totalPrice * shippingRate;
+  
+    // Calculate final total (subtotal + taxes + shipping)
+    const finalTotal = totalPrice + taxes + shippingFee;
   
     const payload = {
       userId,
@@ -120,12 +193,40 @@ const CheckoutPage = () => {
       const productIds = selectedItems.map((item) => item.product.id);
       console.log('Deleting ordered products with payload:', { userId, productIds });
   
+      // Wait for product deletion to complete
       const deleteResponse = await axios({
         method: 'delete',
         url: `${import.meta.env.VITE_API}/delete-ordered-products`,
         data: { userId, productIds },
       });
+  
       console.log('Delete Response:', deleteResponse.data);
+  
+      const emailPayload = {
+        email: userInfo.email,
+        orderDetails: {
+          subtotal: totalPrice,
+          taxes,
+          shippingFee,
+          finalTotal,
+          products: selectedItems.map((item) => ({
+            productId: item.product.id,
+            productName: item.product.name,  // Include product name for email
+            quantity: item.quantity,
+            price: item.product.price,
+            total: item.product.price * item.quantity,  // Total for this product
+          })),
+          paymentMethod: shippingMethod.toLowerCase().replace(' ', '_'),  // Add payment method here
+        },
+      };
+  
+      try {
+        await axios.post(`${import.meta.env.VITE_API}/send-order-confirmation`, emailPayload);
+        console.log('Confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Optionally, show an alert for email failure, but proceed with the order success
+      }
   
       Swal.fire({
         icon: 'success',
@@ -134,17 +235,18 @@ const CheckoutPage = () => {
       });
   
       navigate('/', { state: { order: response.data.order } });
+  
     } catch (error) {
       console.error('Error placing order:', error);
   
       Swal.fire({
         icon: 'error',
         title: 'Order Failed',
-        text: 'Something went wrong. Please try again.',
+        text: `Something went wrong. Please try again. Error: ${JSON.stringify(error.response ? error.response.data : error.message)}`,
       });
     }
   };
-
+  
   return (
     <Box
       sx={{

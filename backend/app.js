@@ -9,6 +9,7 @@ const products = require('./routes/product');
 const authRoute = require('./routes/authRoute');
 const orderListRoutes = require('./routes/orderlist');
 const orderRoutes = require('./routes/order');
+const orderRoute = require('./routes/orderRoute');
 
 // Middleware
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -33,5 +34,5 @@ app.use('/api/v1', products);
 app.use('/api/v1', orderListRoutes);
 app.use('/api/v1', orderRoutes);
 app.use('/api/auth', authRoute);
-
+app.use('/api/v1', orderRoute);
 module.exports = app;

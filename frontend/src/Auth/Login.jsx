@@ -10,7 +10,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { auth, googleProvider } from "../firebaseConfig"; // Import from your config
 import { signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import '../Auth.css';
+import '../Auth.css'; // Ensure this path is correct
 
 const Login = () => {
     const { loading, login, loginWithGoogle } = useAuth();
@@ -69,14 +69,14 @@ const Login = () => {
             setAlert({ type: "success", message: "Password reset email sent!" });
             setResetDialogOpen(false);
         } catch (error) {
-            setAlert({ type: "error", message: 'Failed to send reset email: ${error.message} '});
+            setAlert({ type: "error", message: `Failed to send reset email: ${error.message}` });
         }
     };
 
     return (
-        <Card sx={{ maxWidth: 500, mx: 'auto', mt: 5, p: 3 }}>
+        <Card className="form-container">
             <Box className="flex-container">
-            <div className="image-content">
+                <div className="image-content">
                     <img src={registerImage} className="auth-loginimage" alt="Register" />
                 </div>
                 <Box className="form-content">
@@ -85,56 +85,56 @@ const Login = () => {
                     </Typography>
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div>
-                        <Controller
-                                    name="email"
-                                    control={control}
-                                    render={({ field }) => (
-                            <TextField
-                                {...field}
-                                label="Email"
-                                fullWidth
-                                margin="normal"
-                                required
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <EmailIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                error={!!errors.email}
-                                helperText={errors.email ? errors.email.message : ''}
+                            <Controller
+                                name="email"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Email"
+                                        fullWidth
+                                        margin="normal"
+                                        required
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <EmailIcon />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        error={!!errors.email}
+                                        helperText={errors.email ? errors.email.message : ''}
+                                    />
+                                )}
                             />
-                            )}
-                        />
                         </div>
 
                         <div>
-                        <Controller
-                                    name="password"
-                                    control={control}
-                                    render={({ field }) => (
-                            <TextField
-                                {...field}
-                                label="Password"
-                                fullWidth
-                                margin="normal"
-                                required
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <LockIcon />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                error={!!errors.password}
-                                helperText={errors.password ? errors.password.message : ''}
+                            <Controller
+                                name="password"
+                                control={control}
+                                render={({ field }) => (
+                                    <TextField
+                                        {...field}
+                                        label="Password"
+                                        fullWidth
+                                        margin="normal"
+                                        required
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <LockIcon />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                        error={!!errors.password}
+                                        helperText={errors.password ? errors.password.message : ''}
+                                    />
+                                )}
                             />
-                            )}
-                        />
                         </div>
 
-                        {alert.message && <Alert severity={alert.type}>{alert.message}</Alert>}
+                        {alert.message && <Alert severity={alert.type} className="alert">{alert.message}</Alert>}
                     
                         <div>
                             {loading ? (
@@ -166,27 +166,27 @@ const Login = () => {
                             Forgot your password?
                         </Typography>
                     </form>
-                        <Dialog open={isResetDialogOpen} onClose={() => setResetDialogOpen(false)}>
+                    <Dialog open={isResetDialogOpen} onClose={() => setResetDialogOpen(false)}>
                         <DialogTitle>Reset Password</DialogTitle>
                         <DialogContent>
-                        <TextField
-                            label="Enter your email"
-                            type="email"
-                            fullWidth
-                            margin="dense"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                        />
+                            <TextField
+                                label="Enter your email"
+                                type="email"
+                                fullWidth
+                                margin="dense"
+                                value={resetEmail}
+                                onChange={(e) => setResetEmail(e.target.value)}
+                            />
                         </DialogContent>
                         <DialogActions>
-                        <Button onClick={() => setResetDialogOpen(false)} color="secondary">
-                            Cancel
-                        </Button>
-                        <Button onClick={handleForgotPassword} color="primary">
-                            Send Reset Link
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                            <Button onClick={() => setResetDialogOpen(false)} color="secondary">
+                                Cancel
+                            </Button>
+                            <Button onClick={handleForgotPassword} color="primary">
+                                Send Reset Link
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Box>
             </Box>
         </Card>

@@ -14,7 +14,9 @@ import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
 import Dashboard from "./Components/Dashboard";
-import EnhancedTable from "./Components/admin/Usertable"; // Import the UserTable component
+import OrderChartContainer from "./admin/OrderChart"; // Import the OrderChart component
+import StatusTable from "./admin/StatusTable"; // Import the StatusTable component
+import ProductTable from "./admin/ProductTable"; // Import the ProductTable component
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -28,6 +30,7 @@ const AppContent = () => {
   const location = useLocation(); // Track the current route
   const [currentUser, setCurrentUser] = useState(null); // Track the logged-in user
   const [orderCount, setOrderCount] = useState(0); // Track the total order count
+  const [orderData, setOrderData] = useState([]); // Track the order data
 
   // Fetch the order count from the backend
   const fetchOrderCount = async () => {
@@ -106,8 +109,10 @@ const AppContent = () => {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin/users" element={<EnhancedTable />} /> {/* Add the UserTable route */}
-      </Routes>
+        <Route path="/admin/orders-chart" element={<OrderChartContainer />} /> {/* Corrected the route */}
+        <Route path="/admin/status-table" element={<StatusTable />} /> {/* Added the route for StatusTable */}
+        <Route path="/admin/products" element={<ProductTable />} /> {/* Added the route for ProductTable */}
+        </Routes>
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />
     </>
