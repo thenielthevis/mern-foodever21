@@ -13,10 +13,10 @@ import Profile from './Auth/Profile';
 import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
-import Dashboard from "./Components/Dashboard";
-import OrderChartContainer from "./admin/OrderChart"; // Import the OrderChart component
-import StatusTable from "./admin/StatusTable"; // Import the StatusTable component
-import ProductTable from "./admin/ProductTable"; // Import the ProductTable component
+import Dashboard from './Components/Dashboard';
+import OrderChartContainer from './admin/OrderChart';
+import StatusTable from './admin/StatusTable';
+import ProductTable from './admin/ProductTable';
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -25,15 +25,47 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import Unauthorized from './Components/Unauthorized';
+import Toast from "../src/Components/Layout/Toast";
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+};
+
+// Initialize Firebase App
+const firebaseApp = initializeApp(firebaseConfig);
+
+// Initialize Messaging
+const messaging = getMessaging(firebaseApp);
+
+// Function to Request Notification Permission
+export const requestNotificationPermission = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Have permission');
+    } else {
+      console.log('Denied permission');
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission or retrieving token:', error);
+  }
+};
 
 const AppContent = () => {
-  const location = useLocation(); // Track the current route
-  const [currentUser, setCurrentUser] = useState(null); // Track the logged-in user
-  const [orderCount, setOrderCount] = useState(0); // Track the total order count
-  const [orderData, setOrderData] = useState([]); // Track the order data
+  const location = useLocation();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [orderCount, setOrderCount] = useState(0);
 
-  // Fetch the order count from the backend
   const fetchOrderCount = async () => {
     try {
       if (!currentUser) {
@@ -48,40 +80,47 @@ const AppContent = () => {
         },
       });
 
-      const totalOrderCount = response.data.orders.reduce(
-        (acc, order) => acc + order.quantity,
-        0
-      );
+      const totalOrderCount = response.data.orders.reduce((acc, order) => acc + order.quantity, 0);
       setOrderCount(totalOrderCount);
     } catch (error) {
       console.error('Error fetching order count:', error);
     }
   };
 
-  // Track authentication state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user || null);
-      if (!user) setOrderCount(0); // Reset order count if logged out
+      if (!user) setOrderCount(0);
     });
     return () => unsubscribe();
   }, []);
 
-  // Fetch the order count whenever the current user changes
   useEffect(() => {
     if (currentUser) fetchOrderCount();
   }, [currentUser]);
 
-  const onUpdateOrderCount = () => {
-    fetchOrderCount(); // Update the order count
-  };
+  useEffect(() => {
+    const initializeFCM = async () => {
+      if (currentUser) {
+        await requestNotificationPermission();
+      
+        // Listen for foreground messages
+        onMessage(messaging, (payload) => {
+          console.log('Foreground message received:', payload);
+      
+          // Display notification as a toast
+          Toast(`${payload.notification.title}: ${payload.notification.body}`, "success");
+        });
+      }
+    };
 
-  // Define routes where header, footer, and background should be adjusted
+    initializeFCM();
+  }, [currentUser]);
+
   const noHeaderFooterRoutes = ['/checkout', '/login', '/register', '/unauthorized'];
   const noBackgroundRoutes = ['/checkout'];
   const hideHeaderFooter = noHeaderFooterRoutes.includes(location.pathname);
 
-  // Dynamically adjust the `<body>` class based on the route
   useEffect(() => {
     if (noBackgroundRoutes.includes(location.pathname)) {
       document.body.classList.add('no-background');
@@ -90,10 +129,37 @@ const AppContent = () => {
     }
   }, [location]);
 
+  // Register the service worker manually in the app
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered with scope:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('Service Worker registration failed:', error);
+        });
+    }
+
+    // Get FCM token
+    const messaging = getMessaging(firebaseApp);
+    getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY })
+      .then((currentToken) => {
+        if (currentToken) {
+          console.log('FCM Token:', currentToken);
+        } else {
+          console.log('No FCM token available');
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting FCM token:', error);
+      });
+  }, []);
+
   return (
     <>
       {!hideHeaderFooter && (
-        <Header orderCount={orderCount} onUpdateOrderCount={onUpdateOrderCount} />
+        <Header orderCount={orderCount} onUpdateOrderCount={fetchOrderCount} />
       )}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -101,7 +167,7 @@ const AppContent = () => {
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route
           path="/product/:id"
-          element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}
+          element={<ProductDetail onUpdateOrderCount={fetchOrderCount} />}
         />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -111,10 +177,10 @@ const AppContent = () => {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin/orders-chart" element={<OrderChartContainer />} /> {/* Corrected the route */}
-        <Route path="/admin/status-table" element={<StatusTable />} /> {/* Added the route for StatusTable */}
-        <Route path="/admin/products" element={<ProductTable />} /> {/* Added the route for ProductTable */}
-        </Routes>
+        <Route path="/admin/orders-chart" element={<OrderChartContainer />} />
+        <Route path="/admin/status-table" element={<StatusTable />} />
+        <Route path="/admin/products" element={<ProductTable />} />
+      </Routes>
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />
     </>

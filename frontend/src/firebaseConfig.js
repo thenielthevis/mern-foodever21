@@ -23,6 +23,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
+const messaging = getMessaging(app);
 
 // Initialize Google Auth Provider
 const googleProvider = new GoogleAuthProvider();

@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import axios from 'axios';
+import { getMessaging, getToken } from 'firebase/messaging';
 
 export const AuthContext = createContext();
 
@@ -47,36 +48,84 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
+            console.log("Starting login process...");
+    
             // Sign in with Firebase
+            console.log(`Attempting to sign in with email: ${email}`);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
+            console.log("Firebase user credential received:", user);
+    
+            // Reload user
+            console.log("Reloading user...");
             await reloadUser().catch((error) => {
                 console.error("Error reloading user:", error);
                 throw new Error("Failed to reload user. Please log in again.");
             });
     
             if (!user.emailVerified) {
+                console.log("User email not verified.");
                 await signOut(auth);
                 throw new Error('Please verify your email before logging in.');
+            } else {
+                console.log("User email is verified.");
             }
+    
+            // Get Firebase ID Token
+            console.log("Getting Firebase ID Token...");
             const token = await user.getIdToken();
+            console.log("Firebase ID Token received:", token);
             setToken(token);
             setUser(user);
             localStorage.setItem('token', token);
-            const response = await axios.get('http://localhost:5000/api/auth/me', {
+    
+            // Get FCM Token
+            console.log("Getting FCM Token...");
+            const messaging = getMessaging();
+            const fcmToken = await getToken(messaging, {
+                vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+            });
+    
+            console.log("VAPID Key:", import.meta.env.VITE_FIREBASE_VAPID_KEY);
+            if (fcmToken) {
+                console.log("FCM Token received:", fcmToken);
+    
+                // Send FCM token to backend with Authorization header
+                console.log("Sending FCM token to backend...");
+                const fcmResponse = await axios.post('http://localhost:5000/api/auth/update-fcm-token', 
+                    { fcmToken },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        }
+                    }
+                );
+                console.log("FCM token update response:", fcmResponse.data);
+            } else {
+                console.log('No FCM token available');
+            }
+    
+            // Fetch user details from backend
+            console.log("Fetching user details from backend...");
+            const userResponse = await axios.get('http://localhost:5000/api/auth/me', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            const { role } = response.data.user;
+            console.log("User details fetched:", userResponse.data);
+    
+            const { role } = userResponse.data.user;
+            console.log("User role:", role);
             localStorage.setItem('role', role);
             setRole(role);
             axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
+            console.log("Login process completed successfully.");
         } catch (error) {
-            console.error("Error logging in: ", error);
+            console.error("Error logging in:", error);
             throw error;
         }
-    };       
+    };         
 
     const registerWithEmail = async (email, password, username, avatarFile = null) => {
         try {

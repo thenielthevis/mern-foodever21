@@ -45,12 +45,24 @@ const Login = () => {
         console.log("Received values of form: ", values);
         try {
             await login(values.email, values.password);
+    
+            // Retrieve user role from localStorage (set during login)
+            const role = localStorage.getItem('role');
+    
             setAlert({ type: 'success', message: 'Login successful!' });
-            navigate("/"); // Redirect to dashboard after successful login
+    
+            // Navigate based on role
+            if (role === 'admin') {
+                navigate("/dashboard");
+            } else if (role === 'user') {
+                navigate("/");
+            } else {
+                setAlert({ type: 'error', message: 'Unknown role. Contact support.' });
+            }
         } catch (err) {
             setAlert({ type: 'error', message: err.message });
         }
-    };
+    };    
 
     const handleGoogleLogin = async () => {
         try {

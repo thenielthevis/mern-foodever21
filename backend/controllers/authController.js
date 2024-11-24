@@ -343,3 +343,29 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch users.', error: error.message });
   }
 };
+
+exports.updateFcmToken = async (req, res) => { 
+  const { fcmToken } = req.body;  // Get FCM token from request body
+
+  if (!fcmToken) {
+      return res.status(400).json({ message: 'FCM token is required' });
+  }
+
+  try {
+      // The user is authenticated by the 'protect' middleware
+      const user = req.user;  // User data is attached by 'protect' middleware
+
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Update the FCM token in the user model
+      user.fcmToken = fcmToken;
+      await user.save();
+
+      return res.status(200).json({ message: 'FCM token updated successfully' });
+  } catch (error) {
+      console.error('Error updating FCM token:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+  }
+};

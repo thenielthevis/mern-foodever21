@@ -166,7 +166,7 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
 
   return (
     <Drawer
-      anchor="right"
+      anchor="left"
       open={isSidebarOpen}
       onClose={toggleSidebar}
       ModalProps={{
@@ -191,7 +191,7 @@ const OrderSidebar = ({ isSidebarOpen, toggleSidebar, user, onUpdateOrderCount }
             sx={{
               position: "absolute",
               top: 8,
-              left: 8,
+              right: 8,
               border: "2px solid gold",
               borderRadius: "50%",
               padding: "5px",

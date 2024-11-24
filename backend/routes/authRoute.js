@@ -2,6 +2,7 @@ const express = require('express');
 const protect = require('../middleware/protect');
 const adminProtect = require('../middleware/adminprotect');
 const userProtect = require('../middleware/userprotect');
+const router = express.Router();
 
 const {
     login,
@@ -14,9 +15,8 @@ const {
     deleteUser,
     getUsers,
     getAllUsers,
+    updateFcmToken
 } = require('../controllers/authController');
-
-const router = express.Router();
 
 // Routes
 router.post('/signup', signup);
@@ -24,6 +24,7 @@ router.post('/login', login);
 router.patch('/updateUser', protect, updateUser);
 router.put('/updateUser', protect, updateUser);
 router.post('/resetPassword', protect, resetPassword);
+router.post('/update-fcm-token', protect, updateFcmToken);
 router.post('/upload-avatar', uploadAvatar);
 router.get('/me', protect, getCurrentUser);
 router.get('/users', getUsers);
