@@ -35,6 +35,6 @@ router.post('/admin/product/create', adminProtect, upload.array('images', 10), c
 router.put('/admin/product/update/:id', adminProtect, updateProduct);
 router.delete('/admin/product/delete/:id', adminProtect, deleteProduct);
 router.post('/admin/products/deletebulk', adminProtect, deleteProductsBulks);
-router.delete('/product/:productId/review/:reviewId', adminProtect, deleteReview);
+router.delete('/product/:productId/review/:reviewId', deleteReview); // Delete a review
 
 module.exports = router;
