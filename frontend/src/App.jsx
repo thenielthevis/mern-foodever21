@@ -25,6 +25,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { auth } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
+import Unauthorized from './Components/Unauthorized';
 
 const AppContent = () => {
   const location = useLocation(); // Track the current route
@@ -76,7 +77,7 @@ const AppContent = () => {
   };
 
   // Define routes where header, footer, and background should be adjusted
-  const noHeaderFooterRoutes = ['/checkout', '/login', '/register'];
+  const noHeaderFooterRoutes = ['/checkout', '/login', '/register', '/unauthorized'];
   const noBackgroundRoutes = ['/checkout'];
   const hideHeaderFooter = noHeaderFooterRoutes.includes(location.pathname);
 
@@ -97,6 +98,7 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
         <Route
           path="/product/:id"
           element={<ProductDetail onUpdateOrderCount={onUpdateOrderCount} />}

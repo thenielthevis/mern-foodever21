@@ -1,7 +1,5 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
-import Avatar from '@mui/material/Avatar';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -12,18 +10,25 @@ import Tooltip from '@mui/material/Tooltip';
 import Logout from '@mui/icons-material/Logout';
 import Email from '@mui/icons-material/Email';
 import Lock from '@mui/icons-material/Lock';
-import DashboardIcon from '@mui/icons-material/Dashboard'; // Import Dashboard icon
-import { useAuth } from '../context/AuthContext'; // Correct import path
-import axios from 'axios'; // You might need to install axios if you don't have it
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import Edit from '@mui/icons-material/Edit';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios';
+import {
+  Typography,
+  Box,
+  Avatar,
+} from '@mui/material';
 
 export default function AccountMenu() {
-  const { logout } = useAuth(); // Get the logout function from context
-  const [user, setUser] = React.useState(null); // Store user data
-  const navigate = useNavigate(); // Use React Router's useNavigate hook
+  const { logout } = useAuth();
+  const [user, setUser] = React.useState(null);
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
+  const userRole = localStorage.getItem('role');
+// console.log('User Role:', userRole);
 
-  // Fetch current user data when the component mounts
   React.useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -87,7 +92,7 @@ export default function AccountMenu() {
             aria-expanded={open ? 'true' : undefined}
           >
             <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32 }} />
-            <span style={{color: 'gold'}}>{user?.username}</span>
+            <span style={{ color: 'white', marginLeft: '10px' }}>{user?.username}</span>
           </IconButton>
         </Tooltip>
       </Box>
@@ -128,20 +133,56 @@ export default function AccountMenu() {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          p: 2,
+          borderBottom: '1px solid #ddd',
+          backgroundColor: '#f9f9f9',
+        }}
+      >
+        <Avatar
+          src={user?.avatarURL || '/images/default-avatar.png'}
+          sx={{
+            width: 80,
+            height: 80,
+            mb: 1,
+            border: '3px solid #4caf50',
+          }}
+        />
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 'bold',
+            textTransform: 'capitalize',
+          }}
+        >
+          {user?.username || 'Unknown User'}
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: user?.role === 'admin' ? '#ff5722' : '#607d8b',
+            textTransform: 'uppercase',
+            fontWeight: '500',
+          }}
+        >
+          {user?.role || 'Guest'}
+        </Typography>
+      </Box>
+
+        {/* Divider */}
+        <Divider />
+
+        {/* Menu Items */}
         <MenuItem onClick={handleProfile}>
-        <Avatar src={user?.avatarURL || '/images/default-avatar.png'} sx={{ width: 32, height: 32, border: '2px solid black' }} /> Profile
-        </MenuItem>
-        <MenuItem onClick={handleOrderHistory}>
           <ListItemIcon>
-            <ListAltIcon fontSize="small" />
+            <Edit fontSize="small" />
           </ListItemIcon>
-          Order History
-        </MenuItem>
-        <MenuItem onClick={handleDashboard}>
-          <ListItemIcon>
-            <DashboardIcon fontSize="small" />
-          </ListItemIcon>
-          Dashboard
+          Edit Profile
         </MenuItem>
         <MenuItem onClick={handleUpdateEmail}>
           <ListItemIcon>
@@ -155,7 +196,26 @@ export default function AccountMenu() {
           </ListItemIcon>
           Change Password
         </MenuItem>
+
         <Divider />
+        {userRole === 'user' && (
+        <MenuItem onClick={handleOrderHistory}>
+          <ListItemIcon>
+            <ListAltIcon fontSize="small" />
+          </ListItemIcon>
+          Order History
+        </MenuItem>
+        )}
+        {userRole === 'admin' && (
+          <MenuItem onClick={handleDashboard}>
+            <ListItemIcon>
+              <DashboardIcon fontSize="small" />
+            </ListItemIcon>
+            Dashboard
+          </MenuItem>
+        )}
+        <Divider />
+
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
@@ -164,5 +224,5 @@ export default function AccountMenu() {
         </MenuItem>
       </Menu>
     </React.Fragment>
-  );
+  );  
 }

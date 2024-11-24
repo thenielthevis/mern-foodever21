@@ -2,9 +2,10 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import { getMessaging, getToken } from "firebase/messaging";
 
 // Log the environment variable to ensure it's being loaded correctly
-console.log(import.meta.env.VITE_FIREBASE_API_KEY);
+// console.log(import.meta.env.VITE_FIREBASE_API_KEY);
 
 // Firebase configuration from environment variables
 const firebaseConfig = {

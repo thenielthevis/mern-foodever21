@@ -187,7 +187,6 @@ html, body, #root {
   width: auto;
   padding: 20px;
   margin-right: 50px;
-  border-right: solid 1px dimgray;
 }
 
 /* Sidebar Headers */
@@ -235,12 +234,12 @@ html, body, #root {
 
 /* PRODUCT CARD STYLES */
 .product-card {
-  width: 350px;
+  width: 200px;
   background-color: rgba(51, 51, 51, 0.8);
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  min-height: 400px;
+  min-height: 200px;
   display: flex;
   flex-direction: column; /* Ensure content stacks vertically */
   justify-content: space-between; /* Push content to the top and bottom */
@@ -254,7 +253,7 @@ html, body, #root {
 
 .product-card img {
   width: 100%;
-  height: 250px;
+  height: 200px;
   object-fit: cover;
 }
 
@@ -351,7 +350,6 @@ html, body, #root {
   border-radius: 8px;
   object-fit: cover;
   margin-bottom: 10px;
-  background-color: #444;
 }
 
 .thumbnails {
