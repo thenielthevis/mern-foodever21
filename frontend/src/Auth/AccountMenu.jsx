@@ -64,7 +64,7 @@ export default function AccountMenu() {
   };
 
   const handleDashboard = () => {
-    navigate('/dashboard'); // Navigate to dashboard page
+    navigate('/admin/*'); // Navigate to dashboard page
   };
 
   const handleUpdateEmail = () => {

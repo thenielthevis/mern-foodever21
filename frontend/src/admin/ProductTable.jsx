@@ -48,6 +48,7 @@ const ProductTable = () => {
                 reviews: product.reviews || [],
             }));
             setData(products);
+            setSelectedRows([]); // Clear selected rows when data is refreshed
         } catch (error) {
             console.error('Error fetching products:', error);
         }
@@ -185,9 +186,7 @@ const handleDeleteProduct = (productId) => {
 // Handle Bulk Delete Products with confirmation
 const handleBulkDeleteProducts = async (idsToDelete) => {
     if (!idsToDelete || idsToDelete.length === 0) {
-        swal("No products selected for deletion!", {
-            icon: "warning",
-        });
+        swal("No products selected for deletion!", { icon: "warning" });
         return;
     }
 
@@ -197,28 +196,29 @@ const handleBulkDeleteProducts = async (idsToDelete) => {
         icon: "warning",
         buttons: true,
         dangerMode: true,
-    })
-    .then(async (willDelete) => {
+    }).then(async (willDelete) => {
         if (willDelete) {
             try {
                 const response = await axios.post('http://localhost:5000/api/v1/admin/products/deletebulk', { ids: idsToDelete });
                 if (response.data.success) {
-                    fetchProducts(); // Refresh products list
-                    swal("Poof! Your selected products have been deleted!", {
-                        icon: "success",
-                    });
+                    // Filter out deleted products
+                    setData((prevData) => prevData.filter((product) => !idsToDelete.includes(product.id)));
+
+                    // Clear selected rows
+                    setSelectedRows([]);
+
+                    swal("Poof! Your selected products have been deleted!", { icon: "success" });
                 }
             } catch (error) {
                 console.error('Error deleting products:', error);
-                swal("Error! Your selected products could not be deleted!", {
-                    icon: "error",
-                });
+                swal("Error! Your selected products could not be deleted!", { icon: "error" });
             }
         } else {
             swal("Your selected products are safe!");
         }
     });
 };
+
 
     const handleDeleteReview = async (productId, reviewId) => {
         try {
@@ -314,22 +314,23 @@ const handleBulkDeleteProducts = async (idsToDelete) => {
     const options = {
         selectableRows: 'multiple',
         onRowsDelete: (rowsDeleted) => {
-            const idsToDelete = rowsDeleted.data.map(d => data[d.dataIndex].id);
-            handleBulkDeleteProducts(idsToDelete); // Pass the IDs directly
-            return false; // Prevent default delete action
+            const idsToDelete = rowsDeleted.data.map((d) => data[d.dataIndex]?.id).filter(Boolean);
+            handleBulkDeleteProducts(idsToDelete);
+            return false; // Prevent default deletion action
         },
-        expandableRows: true,    // Enable expandable rows
-        expandableRowsHeader: false,  // Hide expandable rows header
+        expandableRows: true,
+        expandableRowsHeader: false,
         renderExpandableRow: (rowData, rowMeta) => {
-            const product = data[rowMeta.dataIndex];
+            const product = data[rowMeta.dataIndex]; // Fetch the current product
             return (
                 <tr>
                     <td colSpan={6}>
                         <div style={{ padding: '20px', backgroundColor: '#f4f4f4' }}>
                             <h4>Description:</h4>
                             <p>{product.description}</p>
+                            
                             <h4>Images:</h4>
-                            {product.images && product.images.length > 0 ? (
+                            {product.images?.length > 0 ? (
                                 product.images.map((image, index) => (
                                     <img
                                         key={index}
@@ -341,95 +342,56 @@ const handleBulkDeleteProducts = async (idsToDelete) => {
                             ) : (
                                 <p>No images available</p>
                             )}
-                        </div>
-
-                        <h4>Reviews:</h4>
-                        {product.reviews && product.reviews.length > 0 ? (
-                            product.reviews.map((review) => (
-                                <Box
-                                    key={review._id}
-                                    display="flex"
-                                    justifyContent="space-between"
-                                    alignItems="center"
-                                    mb={2}
-                                    p={2}
-                                    bgcolor="#fff"
-                                    border="1px solid #ddd"
-                                    borderRadius="4px"
-                                    marginTop="10px"
-                                >
-                                    <Box>
-                                        <Typography variant="body1">
-                                            <strong>User:</strong> {review.name}
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            <strong>Comment:</strong> {review.comment}
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            <strong>Rating:</strong> {review.rating}
-                                        </Typography>
-                                    </Box>
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        onClick={() => handleDeleteReview(product.id, review._id)}
+    
+                            <h4>Reviews:</h4>
+                            {product.reviews?.length > 0 ? (
+                                product.reviews.map((review, index) => (
+                                    <Box
+                                        key={index}
+                                        display="flex"
+                                        justifyContent="space-between"
+                                        alignItems="center"
+                                        mb={2}
+                                        p={2}
+                                        bgcolor="#fff"
+                                        border="1px solid #ddd"
+                                        borderRadius="4px"
+                                        marginTop="10px"
                                     >
-                                        Delete
-                                    </Button>
-                                </Box>
-                            ))
-                        ) : (
-                            <p>No reviews available</p>
-                        )}
+                                        <Box>
+                                            <Typography variant="body1">
+                                                <strong>User:</strong> {review.name}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                <strong>Comment:</strong> {review.comment}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                <strong>Rating:</strong> {review.rating} / 5
+                                            </Typography>
+                                        </Box>
+                                        <Button
+                                            variant="contained"
+                                            color="secondary"
+                                            onClick={() => handleDeleteReview(product.id, review._id)}
+                                        >
+                                            Delete Review
+                                        </Button>
+                                    </Box>
+                                ))
+                            ) : (
+                                <p>No reviews available</p>
+                            )}
+                        </div>
                     </td>
                 </tr>
             );
         },
         onRowExpansionChange: (curExpandedRow, allExpandedRows) => {
-            setExpandedRows(allExpandedRows);  // Keep track of expanded rows
+            setExpandedRows(allExpandedRows); // Keep track of expanded rows
         },
     };
 
-    // const options = {
-    //     selectableRows: 'multiple',  // Enable row selection for bulk delete
-    //     onRowsDelete: (rowsDeleted) => {
-    //         const idsToDelete = rowsDeleted.data.map(d => data[d.dataIndex].id);
-    //         setSelectedRows(idsToDelete);
-    //         return false;  // Prevent default delete action
-    //     },
-    //     expandableRows: true,    // Enable expandable rows
-    //     expandableRowsHeader: false,  // Hide expandable rows header
-    //     renderExpandableRow: (rowData, rowMeta) => {
-    //         const product = data[rowMeta.dataIndex];
-    //         return (
-    //             <tr>
-    //                 <td colSpan={6}>
-    //                     <div style={{ padding: '20px', backgroundColor: '#f4f4f4' }}>
-    //                         <h4>Description:</h4>
-    //                         <p>{product.description}</p>
-    //                         <h4>Images:</h4>
-    //                         {product.images && product.images.length > 0 ? (
-    //                             product.images.map((image, index) => (
-    //                                 <img
-    //                                     key={index}
-    //                                     src={image.url}
-    //                                     alt={`Product ${index}`}
-    //                                     style={{ width: '50px', height: '50px', marginRight: '10px' }}
-    //                                 />
-    //                             ))
-    //                         ) : (
-    //                             <p>No images available</p>
-    //                         )}
-    //                     </div>
-    //                 </td>
-    //             </tr>
-    //         );
-    //     },
-    //     onRowExpansionChange: (curExpandedRow, allExpandedRows) => {
-    //         setExpandedRows(allExpandedRows);  // Keep track of expanded rows
-    //     },
-    // };
-    // Custom title with 'Add Product' and 'Bulk Delete' buttons
+   
     const customTitle = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3>Products</h3>

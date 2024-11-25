@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
-  IconButton,
   Typography,
   Paper,
   Box,
   Grid,
   Button,
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import BarChartIcon from '@mui/icons-material/BarChart';
@@ -135,14 +133,7 @@ const Dashboard = () => {
     <Box display="flex" flexDirection="column">
       <AppBar position="static" sx={{ backgroundColor: 'white', color: 'black' }}>
         <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <MenuIcon />
-          </IconButton>
+          {/* Removed Hamburger Menu */}
           <Typography
             variant="h4"
             component="div"
@@ -160,7 +151,15 @@ const Dashboard = () => {
               {error}
             </Typography>
           )}
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              justifyContent: 'center', // Centers the cards horizontally
+              alignItems: 'center', // Centers vertically if required
+              minHeight: '200px', // Adjust the height if needed
+            }}
+          >
             {summaryData.map((data, index) => (
               <Grid item xs={12} sm={6} md={3} key={index}>
                 <SummaryCard

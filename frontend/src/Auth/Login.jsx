@@ -1,33 +1,55 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import registerImage from "../assets/register.png";
-import { Box, Card, Typography, TextField, Button, Alert, InputAdornment, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import LockIcon from '@mui/icons-material/Lock';
-import EmailIcon from '@mui/icons-material/Email';
-import * as Yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { useForm, Controller } from 'react-hook-form';
-import { auth, googleProvider } from "../firebaseConfig"; // Import from your config
+import {
+    Box,
+    Card,
+    Typography,
+    TextField,
+    Button,
+    Alert,
+    InputAdornment,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle
+} from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import EmailIcon from "@mui/icons-material/Email";
+import * as Yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useForm, Controller } from "react-hook-form";
+import { auth, googleProvider } from "../firebaseConfig"; // Import from your Firebase config
 import { signInWithPopup, sendPasswordResetEmail } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
-import '../Auth.css'; // Ensure this path is correct
+import "../Auth.css"; // Ensure this path is correct
 
 const Login = () => {
     const { loading, login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
     const [progress, setProgress] = useState(0);
-    const [alert, setAlert] = useState({ type: '', message: '' });
+    const [alert, setAlert] = useState({ type: "", message: "" });
     const [isResetDialogOpen, setResetDialogOpen] = useState(false);
-    const [resetEmail, setResetEmail] = useState('');
+    const [resetEmail, setResetEmail] = useState("");
 
     // Yup validation schema
     const LoginSchema = Yup.object().shape({
-        email: Yup.string().email('The input is not valid email!').required('Please input your Email!'),
-        password: Yup.string().required('Please input your Password!'),
+        email: Yup.string()
+            .email("The input is not a valid email!")
+            .required("Please input your Email!"),
+        password: Yup.string().required("Please input your Password!")
     });
 
-    const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-        resolver: yupResolver(LoginSchema)
+    const {
+        control,
+        handleSubmit,
+        formState: { errors, isSubmitting }
+    } = useForm({
+        resolver: yupResolver(LoginSchema),
+        defaultValues: {
+            email: "",
+            password: ""
+        }
     });
 
     useEffect(() => {
@@ -40,29 +62,29 @@ const Login = () => {
             };
         }
     }, [loading]);
-    
+
     const onSubmit = async (values) => {
         console.log("Received values of form: ", values);
         try {
             await login(values.email, values.password);
-    
+
             // Retrieve user role from localStorage (set during login)
-            const role = localStorage.getItem('role');
-    
-            setAlert({ type: 'success', message: 'Login successful!' });
-    
+            const role = localStorage.getItem("role");
+
+            setAlert({ type: "success", message: "Login successful!" });
+
             // Navigate based on role
-            if (role === 'admin') {
-                navigate("/dashboard");
-            } else if (role === 'user') {
+            if (role === "admin") {
+                navigate("/admin/*");
+            } else if (role === "user") {
                 navigate("/");
             } else {
-                setAlert({ type: 'error', message: 'Unknown role. Contact support.' });
+                setAlert({ type: "error", message: "Unknown role. Contact support." });
             }
         } catch (err) {
-            setAlert({ type: 'error', message: err.message });
+            setAlert({ type: "error", message: err.message });
         }
-    };    
+    };
 
     const handleGoogleLogin = async () => {
         try {
@@ -81,7 +103,10 @@ const Login = () => {
             setAlert({ type: "success", message: "Password reset email sent!" });
             setResetDialogOpen(false);
         } catch (error) {
-            setAlert({ type: "error", message: `Failed to send reset email: ${error.message}` });
+            setAlert({
+                type: "error",
+                message: `Failed to send reset email: ${error.message}`
+            });
         }
     };
 
@@ -106,16 +131,15 @@ const Login = () => {
                                         label="Email"
                                         fullWidth
                                         margin="normal"
-                                        required
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <EmailIcon />
                                                 </InputAdornment>
-                                            ),
+                                            )
                                         }}
                                         error={!!errors.email}
-                                        helperText={errors.email ? errors.email.message : ''}
+                                        helperText={errors.email ? errors.email.message : ""}
                                     />
                                 )}
                             />
@@ -131,37 +155,41 @@ const Login = () => {
                                         label="Password"
                                         fullWidth
                                         margin="normal"
-                                        required
+                                        type="password"
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
                                                     <LockIcon />
                                                 </InputAdornment>
-                                            ),
+                                            )
                                         }}
                                         error={!!errors.password}
-                                        helperText={errors.password ? errors.password.message : ''}
+                                        helperText={errors.password ? errors.password.message : ""}
                                     />
                                 )}
                             />
                         </div>
 
                         {alert.message && <Alert severity={alert.type} className="alert">{alert.message}</Alert>}
-                    
+
                         <div>
-                            {loading ? (
-                                <Box sx={{ width: '100%' }}>
-                                    <LinearProgressWithLabel value={progress} />
-                                </Box>
-                            ) : (
-                                <Button type="primary" htmlType="submit" size="large" className="btn" disabled={isSubmitting || loading}>
-                                    Sign In
-                                </Button>
-                            )}
+                            <Button
+                                type="submit"
+                                size="large"
+                                className="btn"
+                                disabled={isSubmitting || loading}
+                            >
+                                Sign In
+                            </Button>
                         </div>
 
                         <div>
-                            <Button type="default" size="large" className="btn" onClick={handleGoogleLogin}>
+                            <Button
+                                type="default"
+                                size="large"
+                                className="btn"
+                                onClick={handleGoogleLogin}
+                            >
                                 Sign In with Google
                             </Button>
                         </div>
@@ -170,9 +198,10 @@ const Login = () => {
                                 <Button variant="contained" size="large" className="btn">
                                     Create Account
                                 </Button>
-                            </Link> 
+                            </Link>
                         </div>
-                        <Typography sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "blue" }}
+                        <Typography
+                            sx={{ mt: 2, textAlign: "center", cursor: "pointer", color: "blue" }}
                             onClick={() => setResetDialogOpen(true)}
                         >
                             Forgot your password?

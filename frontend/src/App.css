@@ -471,3 +471,76 @@ html, body, #root {
   background-color: rgb(212, 182, 10);
   color: black;
 } 
+
+/* Base Styles for Admin Sidebar */
+#sidebar_admin {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background-color: #ffd523;
+  transition: width 0.3s ease-in-out;
+}
+
+#sidebar_admin.sidebar_admin--collapsed {
+  width: 80px;
+}
+
+#sidebar_admin.sidebar_admin--expanded {
+  width: 250px;
+}
+
+.sidebar_admin-header {
+  padding: 1rem;
+  background-color: #f5a623;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar_admin-title {
+  font-size: 1.2rem;
+}
+
+/* Menu Admin Styles */
+.menu_admin {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu_admin-item {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  color: black;
+  text-decoration: none;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.menu_admin-item:hover {
+  background-color: #f5f5f5;
+}
+
+.menu_admin-link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.menu_admin-icon {
+  font-size: 1.5rem;
+  margin-right: 1rem;
+}
+
+/* Hide text when collapsed */
+#sidebar_admin.sidebar_admin--collapsed .menu_admin-link span {
+  display: none;
+}
+
+#sidebar_admin.sidebar_admin--collapsed .menu_admin-icon {
+  margin-right: 0;
+}

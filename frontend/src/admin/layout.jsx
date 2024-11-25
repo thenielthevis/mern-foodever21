@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Box, AppBar, Toolbar, IconButton, Typography } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import Sidebar from "./Sidebar"; // Assuming Sidebar exists in admin directory
-import Header from "../Components/Layout/Header"; // Adjust the import path if Navbar exists elsewhere
+import Sidebar from "./Sidebar"; 
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -20,8 +19,9 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Admin Panel
           </Typography>
-          <Header /> {/* Include your Navbar component here */}
+          {/* Removed the Header component from here */}
         </Toolbar>
       </AppBar>
 

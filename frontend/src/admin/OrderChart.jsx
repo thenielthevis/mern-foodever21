@@ -61,9 +61,11 @@ const OrdersChart = ({ data }) => {
         <Legend />
         <Bar
           dataKey="quantity"
+          isAnimationActive={false}
+          name="Quantity"
           fill={({ payload }) => {
-            const month = payload?.month?.split(" ")[0]; // Extract the month name
-            return monthColors[month] || "#8884d8"; // Default to purple if month not found
+            const month = payload?.month;
+            return monthColors[month] || "#8884d8"; // Dynamically apply color
           }}
         />
       </BarChart>
@@ -80,20 +82,14 @@ const OrdersChartContainer = () => {
   useEffect(() => {
     const fetchOrdersStatusData = async () => {
       try {
-        console.log("Fetching data with params:", { startDate, endDate });
-        const response = await axios.get(
-          `${import.meta.env.VITE_API}/orders`,
-          {
-            params: { startDate, endDate },
-          }
-        );
-        console.log("API Response:", response.data);
+        const response = await axios.get("http://localhost:5000/api/v1/orders", {
+          params: { startDate, endDate },
+        });
         const processedData = response.data.map((order) => ({
           month: order.month,
           productName: order.mostBoughtProduct,
           quantity: order.quantity,
         }));
-        console.log("Processed Data:", processedData);
         setChartData(processedData);
       } catch (error) {
         console.error("Error fetching orders status data:", error);

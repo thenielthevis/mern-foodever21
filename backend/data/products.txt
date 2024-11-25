@@ -10,7 +10,7 @@ Baked Macaroni - Classic baked macaroni with a creamy, cheesy sauce, topped with
 Creamy Carbonara - Silky, creamy pasta tossed in a rich sauce made with cream, Parmesan cheese, and crispy bacon bits, for a satisfying, hearty taste. 75
 Kung Pao Chicken Pasta - An Asian-inspired pasta with bold flavors, combining a spicy, tangy sauce with sautéed vegetables and tender noodles. 95
 Pesto Chicken - A flavorful pasta dish featuring grilled chicken and pasta tossed in a vibrant, fresh basil pesto sauce. 75
-Puttanesca - Traditional Italian pasta with a robust, zesty sauce made of tomatoes, olives, capers, and anchovies, bursting with Mediterranean flavors. 85
+    Puttanesca - Traditional Italian pasta with a robust, zesty sauce made of tomatoes, olives, capers, and anchovies, bursting with Mediterranean flavors. 85
 
 Sandwich
 Burgels - A playful twist on the classic burger, combining a bagel bun with juicy burger patties and fresh toppings for a unique sandwich experience. 170

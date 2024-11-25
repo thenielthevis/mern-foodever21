@@ -15,9 +15,16 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CloseIcon from '@mui/icons-material/Close';
 import DashboardIcon from '@mui/icons-material/Dashboard'; // Icon for Dashboard
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ open, onClose }) => {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path) => {
+    navigate(path); // Navigate to the selected path
+    onClose(); // Close the sidebar
+  };
+
   return (
     <Drawer anchor="left" open={open} onClose={onClose}>
       <Box role="presentation" style={{ width: 250 }}>
@@ -42,7 +49,7 @@ const Sidebar = ({ open, onClose }) => {
         {/* Menu Items */}
         <List>
           {/* Dashboard Link */}
-          <ListItem button component={Link} to="/admin/dashboard">
+          <ListItem button onClick={() => handleNavigation('/admin/dashboard')}>
             <ListItemIcon>
               <DashboardIcon sx={{ color: '#595260' }} />
             </ListItemIcon>
@@ -50,7 +57,7 @@ const Sidebar = ({ open, onClose }) => {
           </ListItem>
 
           {/* Orders Chart Link */}
-          <ListItem button component={Link} to="/admin/orders-chart">
+          <ListItem button onClick={() => handleNavigation('/admin/orders-chart')}>
             <ListItemIcon>
               <ShoppingCartIcon sx={{ color: '#595260' }} />
             </ListItemIcon>
@@ -58,7 +65,7 @@ const Sidebar = ({ open, onClose }) => {
           </ListItem>
 
           {/* Status Table Link */}
-          <ListItem button component={Link} to="/admin/status-table">
+          <ListItem button onClick={() => handleNavigation('/admin/status-table')}>
             <ListItemIcon>
               <HomeIcon sx={{ color: '#595260' }} />
             </ListItemIcon>
@@ -66,7 +73,7 @@ const Sidebar = ({ open, onClose }) => {
           </ListItem>
 
           {/* Products Link */}
-          <ListItem button component={Link} to="/admin/products">
+          <ListItem button onClick={() => handleNavigation('/admin/products')}>
             <ListItemIcon>
               <Inventory2Icon sx={{ color: '#595260' }} />
             </ListItemIcon>

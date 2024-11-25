@@ -14,9 +14,8 @@ import UpdateEmail from './Auth/UpdateEmail';
 import ChangePassword from './Auth/ChangePassword';
 import { AuthProvider } from './context/AuthContext';
 import Dashboard from './Components/Dashboard';
-import OrderChartContainer from './admin/OrderChart';
-import StatusTable from './admin/StatusTable';
-import ProductTable from './admin/ProductTable';
+import Admin from './Components/Admin'; // Admin component to handle all admin-related routes
+
 import './App.css';
 import './Auth.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -204,10 +203,10 @@ const AppContent = () => {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin/orders-chart" element={<OrderChartContainer />} />
-        <Route path="/admin/status-table" element={<StatusTable />} />
-        <Route path="/admin/products" element={<ProductTable />} />
+        {/* Admin Routes */}
+        <Route path="/admin/*" element={<Admin />} />
       </Routes>
+
       {!hideHeaderFooter && <Footer />}
       <ToastContainer />
     </>
