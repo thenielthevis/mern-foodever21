@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, redirect } from 'react-router-dom';
 import axios from 'axios';
 import {
   Breadcrumbs,
@@ -14,6 +14,12 @@ import {
 } from '@mui/material';
 import Toast from "../Layout/Toast";
 import Swal from 'sweetalert2';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Rating from '@mui/material/Rating';
+import { auth } from '../../firebaseConfig';
 
 const ProductDetails = ({ onUpdateOrderCount }) => {
   const { id } = useParams();
@@ -25,6 +31,11 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1); // Default quantity
   const navigate = useNavigate();
+  const [reviewText, setReviewText] = useState(''); // For storing the review text
+const [reviewRating, setReviewRating] = useState(0); // For storing the rating
+const [reviewModalOpen, setReviewModalOpen] = useState(false); // For controlling modal visibility
+const [selectedReview, setSelectedReview] = useState(null); // For storing the review being edited
+
 
   // Fetch user data
   useEffect(() => {
@@ -63,7 +74,7 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
         // Fetch reviews for the product
         const reviewsResponse = await axios.get(`${import.meta.env.VITE_API}/product/${id}/reviews`);
         setReviews(reviewsResponse.data.reviews);
-
+        console.log("Reviews:", reviewsResponse.data.reviews);
         setLoading(false);
         Swal.close();
       } catch (error) {
@@ -104,6 +115,83 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
       Toast(error.response?.data?.message || "Failed to add product to order list.", "error");
     }
   };  
+
+// Open the modal with the selected review
+const handleEdit = (review) => {
+  setSelectedReview(review);
+  setReviewText(review.comment); // Pre-fill the review text
+  setReviewRating(review.rating); // Pre-fill the rating
+  setReviewModalOpen(true); // Open the modal
+};
+
+// Close the modal
+const handleCloseReviewModal = () => {
+  setReviewModalOpen(false);
+  setSelectedReview(null); // Clear the selected review when closing
+  setReviewText('');
+  setReviewRating(0);
+};
+
+// Submit the updated review
+const handleSubmitReview = async () => {
+  try {
+    const token = await auth.currentUser.getIdToken();
+    await axios.put(
+      `${import.meta.env.VITE_API}/product/${product._id}/review/${selectedReview._id}`,
+      { rating: reviewRating, comment: reviewText },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    handleCloseReviewModal(); // Close the modal after submission
+    Swal.fire('Success', 'Review updated successfully!', 'success');
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    Swal.fire('Error', 'Failed to update review.', 'error');
+  }
+};
+  
+const handleDelete = async (reviewId) => {
+  try {
+    // Make sure the user is an admin before proceeding with the delete action
+    if (localStorage.getItem('role') !== 'admin') {
+      Swal.fire('Permission Denied', 'You are not authorized to delete reviews.', 'error');
+      return;
+    }
+
+    // Ask for confirmation before deletion
+    const confirmDelete = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This review will be permanently deleted.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (confirmDelete.isConfirmed) {
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API}/product/${product._id}/review/${reviewId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        Swal.fire('Deleted!', 'Review has been deleted.', 'success');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    Swal.fire('Error', 'Failed to delete the review.', 'error');
+  }
+};
+
 
   if (loading) {
     return (
@@ -167,57 +255,158 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
 
       {/* Display Reviews */}
       <div className="reviews-section">
-        <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
-          Reviews
-        </Typography>
-        {reviews.length === 0 ? (
-          <Typography>No reviews yet. Be the first to review this product!</Typography>
-        ) : (
-          reviews.map((review, index) => (
-            <Box
-              key={index}
-              sx={{
-                mb: 2,
-                p: 2,
-                border: '1px solid #ddd',
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2,
-                backgroundColor: '#444',
-              }}
+  <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
+    Reviews
+  </Typography>
+  {reviews.length === 0 ? (
+    <Typography>No reviews yet. Be the first to review this product!</Typography>
+  ) : (
+    reviews.map((review, index) => (
+      <Box
+        key={index}
+        sx={{
+          mb: 2,
+          p: 2,
+          border: '1px solid #ddd',
+          borderRadius: 2,
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 2,
+          backgroundColor: '#444',
+          position: 'relative', // Positioning icons
+        }}
+      >
+        {/* Show avatar fetched from the review */}
+        <Avatar
+          sx={{ width: 48, height: 48 }}
+          src={review.avatarURL || '/images/default-avatar.png'} // Use review.avatarURL
+          alt={review.name} // Fallback alt text
+        />
+        <div>
+          <Typography variant="body1" fontWeight="bold">
+            {review.username}
+          </Typography>
+          {/* Display stars for the rating */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            {Array.from({ length: 5 }, (_, i) => (
+              <Typography
+                key={i}
+                sx={{
+                  color: i < review.rating ? '#FFD700' : '#DDDDDD', // Gold for filled, gray for unfilled
+                  fontSize: 20,
+                  mr: 0.5,
+                }}
+              >
+                ★
+              </Typography>
+            ))}
+          </Box>
+          <Typography variant="body2">{review.comment}</Typography>
+        </div>
+
+        {/* Conditionally render edit or delete icons */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            display: 'flex',
+            gap: 1,
+          }}
+        >
+        {
+          (review.user === user._id) && (
+            <IconButton
+              onClick={() => handleEdit(review)}
+              sx={{ color: 'white' }}
             >
-              {/* Show avatar fetched from the review */}
-              <Avatar
-                sx={{ width: 48, height: 48 }}
-                src={review.avatarURL || '/images/default-avatar.png'} // Use review.avatarURL
-                alt={review.name} // Fallback alt text
-              />
-              <div>
-                <Typography variant="body1" fontWeight="bold">
-                  {review.username}
-                </Typography>
-                {/* Display stars for the rating */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  {Array.from({ length: 5 }, (_, i) => (
-                    <Typography
-                      key={i}
-                      sx={{
-                        color: i < review.rating ? '#FFD700' : '#DDDDDD', // Gold for filled, gray for unfilled
-                        fontSize: 20,
-                        mr: 0.5,
-                      }}
-                    >
-                      ★
-                    </Typography>
-                  ))}
-                </Box>
-                <Typography variant="body2">{review.comment}</Typography>
-              </div>
-            </Box>
-          ))
+              <EditIcon />
+            </IconButton>
+          )
+        }
+
+        {/* Show delete icon only if the logged-in user is an admin */}
+        {localStorage.getItem('role') === 'admin' && (
+          <IconButton
+            onClick={() => handleDelete(review._id)}
+            sx={{ color: '#d32f2f' }}
+          >
+            <DeleteIcon />
+          </IconButton>
         )}
-      </div>
+        </Box>
+      </Box>
+    ))
+  )}
+</div>
+
+{/* Modal for editing the review */}
+<Modal open={reviewModalOpen} onClose={handleCloseReviewModal}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          boxShadow: 24,
+          p: 4,
+          borderRadius: 2,
+          position: 'relative',
+        }}
+      >
+        {/* Close button */}
+        <IconButton
+          onClick={handleCloseReviewModal}
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            color: 'gray',
+          }}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+
+        {/* Modal content */}
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Edit Review
+        </Typography>
+        <TextField
+          fullWidth
+          label="Review"
+          multiline
+          rows={4}
+          value={reviewText}
+          onChange={(e) => setReviewText(e.target.value)}
+          sx={{ my: 2 }}
+        />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Rating:
+        </Typography>
+        {/* Rating Component */}
+        <Rating
+          name="user-rating"
+          value={reviewRating}
+          onChange={(event, newValue) => {
+            setReviewRating(newValue); // Update the rating state when a star is clicked
+          }}
+          precision={1} // Set rating precision to 1
+          max={5} // Maximum 5 stars
+          size="large" // Adjust star size
+        />
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={handleSubmitReview}
+          sx={{ mt: 2 }}
+        >
+          Submit Review
+        </Button>
+      </Box>
+    </Modal>
 
       {/* Modal for Adding to Order List */}
       <Modal
@@ -256,7 +445,7 @@ const ProductDetails = ({ onUpdateOrderCount }) => {
           />
           <Button
             variant="contained"
-            color="warning"
+            color="primary"
             onClick={handleAddToOrderList}
             sx={{ mt: 2 }}
           >

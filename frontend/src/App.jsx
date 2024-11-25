@@ -103,17 +103,44 @@ const AppContent = () => {
     const initializeFCM = async () => {
       if (currentUser) {
         await requestNotificationPermission();
-      
-        // Listen for foreground messages
-        onMessage(messaging, (payload) => {
-          console.log('Foreground message received:', payload);
-      
-          // Display notification as a toast
-          Toast(`${payload.notification.title}: ${payload.notification.body}`, "success");
-        });
+  
+        // Fetch the current user details from the backend
+        try {
+          console.log("Fetching user details from backend...");
+          const token = localStorage.getItem('token'); // Retrieve the stored token
+          const userResponse = await axios.get('http://localhost:5000/api/auth/me', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+  
+          console.log("User details fetched:", userResponse.data);
+          const currentUserId = userResponse.data.user._id; // Assuming the ID is available in `userResponse.data.user._id`
+  
+          console.log('Current User ID:', currentUserId);
+  
+          // Listen for foreground messages
+          onMessage(messaging, (payload) => {
+            console.log('Foreground message received:', payload);
+  
+            // Log the userId from the notification payload
+            console.log('Payload User ID:', payload.data.userId);
+  
+            // Check if the notification belongs to the current user
+            const notificationUserId = payload.data.userId;
+            if (notificationUserId === currentUserId) {
+              // Display notification as a toast
+              Toast(`${payload.notification.title}: ${payload.notification.body}`, "success");
+            } else {
+              console.log("Notification does not belong to current user.");
+            }
+          });
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
       }
     };
-
+  
     initializeFCM();
   }, [currentUser]);
 

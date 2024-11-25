@@ -16,8 +16,8 @@ const Products = () => {
   const [sortOrder, setSortOrder] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [ratingFilter, setRatingFilter] = useState(null);
-  const [visibleProducts, setVisibleProducts] = useState(10); // Number of products to show initially
-  const itemsPerPage = 10; // Number of products to load per scroll
+  const [visibleProducts, setVisibleProducts] = useState(6);
+  const itemsPerPage = 6;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -176,10 +176,22 @@ const Products = () => {
             }
             aria-label="Rating Filter"
             valueLabelDisplay="off"
+            sx={{
+              color: 'gold',
+              '& .MuiSlider-thumb': {
+                backgroundColor: 'gold',
+              },
+              '& .MuiSlider-track': {
+                backgroundColor: 'gold',
+              },
+              '& .MuiSlider-rail': {
+                backgroundColor: '#b3a125',
+              },
+            }}
           />
           <Typography variant="caption">
             {ratingFilter === null
-              ? "All Products"
+              ? 'All Products'
               : `Rating: ${ratingFilter}`}
           </Typography>
         </Box>

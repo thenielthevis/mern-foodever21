@@ -133,7 +133,7 @@ const getAllStatuses = async (req, res) => {
     try {
       const { orderId } = req.params;
       const { status } = req.body;
-    
+  
       // Find and update the order status
       const updatedOrder = await Order.findByIdAndUpdate(
         orderId,
@@ -160,6 +160,10 @@ const getAllStatuses = async (req, res) => {
             body: `Your order ${orderId} has been ${status}.`,
           },
           token: fcmToken,
+          data: {
+          userId: updatedOrder.userId.toString(),
+          orderId: orderId.toString(),
+          },
         };
   
         // Send notification via FCM
@@ -176,5 +180,6 @@ const getAllStatuses = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  
   
   module.exports = { getOrdersData, getAllOrders, getAllStatuses, updateOrderStatus };

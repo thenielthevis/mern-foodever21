@@ -198,14 +198,14 @@ export default function AccountMenu() {
         </MenuItem>
 
         <Divider />
-        {userRole === 'user' && (
+        {/* {userRole === 'user' && ( */}
         <MenuItem onClick={handleOrderHistory}>
           <ListItemIcon>
             <ListAltIcon fontSize="small" />
           </ListItemIcon>
           Order History
         </MenuItem>
-        )}
+        {/* )} */}
         {userRole === 'admin' && (
           <MenuItem onClick={handleDashboard}>
             <ListItemIcon>

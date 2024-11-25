@@ -1,15 +1,16 @@
 /* Add this CSS to your stylesheet (e.g., index.css) */
 
-.form-container {
+.form-container{
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
-  max-width: 1500px; /* Adjust the max-width as needed */
+  max-width: 100%; /* Adjust the max-width as needed */
   margin: 0 auto; /* Center the form container */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow for better visibility */
   border-radius: 8px; /* Optional: Add rounded corners */
   background: linear-gradient(135deg, #FFD523, #B2B1B9, #595260); /* Gradient background */
+  min-height: 100vh;
 }
 
 .flex-container {

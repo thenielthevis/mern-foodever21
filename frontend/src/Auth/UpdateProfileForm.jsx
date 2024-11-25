@@ -77,7 +77,7 @@ const UpdateProfileForm = ({ userData, onUpdate, onCancel }) => { // Add onCance
   return (
     <Box
       component="form"
-      sx={{ '& .MuiTextField-root': { m: 1, width: '50ch' } }}
+      sx={{ '& .MuiTextField-root': { m: 1, width: '90%' } }}
       noValidate
       autoComplete="off"
       onSubmit={handleSubmit(onSubmit)}

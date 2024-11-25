@@ -401,26 +401,114 @@ const CheckoutPage = () => {
                 </>
               );
             })()}
-
             <RadioGroup
               value={shippingMethod}
               onChange={(e) => setShippingMethod(e.target.value)}
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
             >
               <FormControlLabel
                 value="gcash"
-                control={<Radio />}
-                label="Gcash"
+                control={<Radio sx={{ display: 'none' }} />}
+                label={
+                  <Box
+                    onClick={() => setShippingMethod("gcash")}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '260px',
+                      height: '100px',
+                      border: shippingMethod === "gcash" ? '2px solid #1976d2' : '1px solid #ccc',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: shippingMethod === "gcash" ? '#f0f8ff' : '#fff',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        backgroundColor: '#f9f9f9',
+                      },
+                    }}
+                  >
+                    <img
+                      src="images/gcash.png"
+                      alt="Gcash"
+                      style={{ width: '30px', height: '30px', marginBottom: '8px' }}
+                    />
+                    <Typography variant="body2">Gcash</Typography>
+                  </Box>
+                }
               />
               <FormControlLabel
                 value="credit_card"
-                control={<Radio />}
-                label="Credit Card"
+                control={<Radio sx={{ display: 'none' }} />}
+                label={
+                  <Box
+                    onClick={() => setShippingMethod("credit_card")}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '260px',
+                      height: '100px',
+                      border: shippingMethod === "credit_card" ? '2px solid #1976d2' : '1px solid #ccc',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: shippingMethod === "credit_card" ? '#f0f8ff' : '#fff',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        backgroundColor: '#f9f9f9',
+                      },
+                    }}
+                  >
+                    <img
+                      src="images/credit-card.png"
+                      alt="Credit Card"
+                      style={{ width: '30px', height: '30px', marginBottom: '8px' }}
+                    />
+                    <Typography variant="body2">Credit Card</Typography>
+                  </Box>
+                }
               />
               <FormControlLabel
                 value="cash_on_delivery"
-                control={<Radio />}
-                label="Cash on Delivery"
+                control={<Radio sx={{ display: 'none' }} />}
+                label={
+                  <Box
+                    onClick={() => setShippingMethod("cash_on_delivery")}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '260px',
+                      height: '100px',
+                      border: shippingMethod === "cash_on_delivery" ? '2px solid #1976d2' : '1px solid #ccc',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      backgroundColor: shippingMethod === "cash_on_delivery" ? '#f0f8ff' : '#fff',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        backgroundColor: '#f9f9f9',
+                      },
+                    }}
+                  >
+                    <img
+                      src="images/cod.png"
+                      alt="Cash on Delivery"
+                      style={{ width: '30px', height: '30px', marginBottom: '8px' }}
+                    />
+                    <Typography variant="body2">Cash on Delivery</Typography>
+                  </Box>
+                }
               />
             </RadioGroup>
             <Button

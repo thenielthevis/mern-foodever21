@@ -284,6 +284,70 @@ exports.createProductReview = async (req, res) => {
   }
 };
 
+// In your controller file
+exports.updateProductReview = async (req, res) => {
+  try {
+    const { productId, reviewId } = req.params; // Extract productId and reviewId from params
+    const { rating, comment } = req.body; // Extract the updated rating and comment from the request body
+
+    // Ensure the bad-words filter is initialized
+    if (!Filter) {
+      return res.status(500).json({ message: 'Bad-words filter not initialized.' });
+    }
+
+    // Sanitize the comment using the initialized filter
+    const sanitizedComment = Filter.clean(comment);
+
+    // Extract Firebase token and decode it
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const firebaseUid = decodedToken.uid;
+
+    // Find the MongoDB user associated with this Firebase UID
+    const user = await User.findOne({ firebaseUid });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Find the product by its ID
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found.' });
+    }
+
+    // Find the review by its ID
+    const review = product.reviews.id(reviewId);
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found.' });
+    }
+
+    // Check if the logged-in user is the owner of the review or an admin
+    if (review.user.toString() !== user._id.toString() && localStorage.getItem('role') !== 'admin') {
+      return res.status(403).json({ message: 'You are not authorized to edit this review.' });
+    }
+
+    // Update the review with the new rating and sanitized comment
+    review.rating = rating;
+    review.comment = sanitizedComment;
+
+    // Recalculate the product's overall ratings
+    product.ratings =
+      product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length;
+
+    // Save the product with updated review
+    await product.save();
+
+    res.status(200).json({
+      success: true,
+      reviews: product.reviews,
+      numOfReviews: product.numOfReviews,
+      ratings: product.ratings,
+    });
+  } catch (error) {
+    console.error('Error updating review:', error);
+    res.status(500).json({ message: 'Failed to update review.' });
+  }
+};
   
   exports.getUserProductReview = async (req, res) => {
     try {
